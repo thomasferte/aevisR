@@ -89,34 +89,34 @@ ButterflyStackAE <- function(baseEI, baseTr,
                               "ARM" = ARMvar)
   if (!is.null(TTTYN)) baseTr <- baseTr %>% rename("TTTYN" = TTTYN)
 
-  #on récupère le nombre de modalité de la variable Grade pour les échelles de couleurs des graphiques
+  #on r\u00e9cupère le nombre de modalit\u00e9 de la variable Grade pour les \u00e9chelles de couleurs des graphiques
   vect_grade <- sort(unique((baseEI$Grade)))
 
   #### table EI
   #liste des groupes de traitement de la table baseTr
   list_ARM <- unique(baseTr$ARM)
   if (is.null(ARMe)) {
-    #Liste des id patients dans le bras numéro 1
+    #Liste des id patients dans le bras num\u00e9ro 1
     list_pat1 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[1]])
-    #Liste des id patients dans le bras numéro 2
+    #Liste des id patients dans le bras num\u00e9ro 2
     list_pat2 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[2]])
   } else if (!is.null(ARMe)){
     l2 <- unique(baseTr$ARM)
-    if (!(ARMe %in% l2)) return("Nom de bras de traitement non correct ou non présent dans la base.")
+    if (!(ARMe %in% l2)) return("Nom de bras de traitement non correct ou non pr\u00e9sent dans la base.")
     list_ARM[1] <- ARMe
     list_ARM[2] <- l2[l2 != ARMe]
 
-    #Liste des id patients dans le bras numéro 1 : GC
+    #Liste des id patients dans le bras num\u00e9ro 1 : GC
     list_pat1 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[1]])
-    #Liste des id patients dans le bras numéro 2 : GC + Avelumab
+    #Liste des id patients dans le bras num\u00e9ro 2 : GC + Avelumab
     list_pat2 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[2]])
   }
-  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont présents
+  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont pr\u00e9sents
   baseEI$ARM <- ifelse(baseEI$id_pat %in% list_pat1, "armG", "armD")
   baseTr$ARM <- ifelse(baseTr$ARM==list_ARM[1], "armG","armD")
 
 
-  #On créé une table de fréquence **frq2** qui contient le nombre de patient dans chaque bras de traitement en tenant compte du fait qu’ils doivent avoir pris le traitement et donc être considérés comme "à risque"
+  #On cr\u00e9\u00e9 une table de fr\u00e9quence **frq2** qui contient le nombre de patient dans chaque bras de traitement en tenant compte du fait qu’ils doivent avoir pris le traitement et donc être consid\u00e9r\u00e9s comme "à risque"
   if (is.null(TTTYN)){
     df_Tr2 <- baseTr
   } else {
@@ -128,9 +128,9 @@ ButterflyStackAE <- function(baseEI, baseTr,
   df2 <- baseEI %>% select(id_pat, ARM, SOC, COD, Grade) %>% arrange(id_pat, ARM,SOC,COD,desc(Grade))
 
   #Selection des variables d'interêt
-  if (!(SOCchoix %in% df2$SOC)) return("SOC choisit non présent dans la base de donnée")
+  if (!(SOCchoix %in% df2$SOC)) return("SOC choisit non pr\u00e9sent dans la base de donn\u00e9e")
   df2_SOC <- df2[df2$SOC == SOCchoix,]
-  df2_SOC <- df2_SOC[!is.na(df2_SOC$Grade),] #on ne garde pas les EIs pour lesquels ont a pas l'info sur le grade (normalement pas présents la base doit être complète et nettoyée avant)
+  df2_SOC <- df2_SOC[!is.na(df2_SOC$Grade),] #on ne garde pas les EIs pour lesquels ont a pas l'info sur le grade (normalement pas pr\u00e9sents la base doit être complète et nettoy\u00e9e avant)
 
 
   ### Selectionner les lignes avec le grade max
@@ -149,10 +149,10 @@ ButterflyStackAE <- function(baseEI, baseTr,
 
 
   ######################### Liste des COD ###############################
-  # Car tous les COD doivent être présents dans les deux bases sinon problème pour le plot
+  # Car tous les COD doivent être pr\u00e9sents dans les deux bases sinon problème pour le plot
   list_COD <- unique(df4_SOC$COD) #list des PT pour cette SOC dans toute la base (deux groupes confondus)
-  list_COD_1 <- unique(df4_SOC_1$COD) #liste des PT déjà présents dans la base du groupe 1
-  list_COD_2 <- unique(df4_SOC_2$COD) #liste des PT déjà présents dans la base du groupe 2
+  list_COD_1 <- unique(df4_SOC_1$COD) #liste des PT d\u00e9jà pr\u00e9sents dans la base du groupe 1
+  list_COD_2 <- unique(df4_SOC_2$COD) #liste des PT d\u00e9jà pr\u00e9sents dans la base du groupe 2
 
   ## ajout groupe 1
   add_1 <- list_COD[!(list_COD %in% list_COD_1)]  #liste des PT à ajouter dans la base du groupe1
@@ -185,7 +185,7 @@ ButterflyStackAE <- function(baseEI, baseTr,
     rk1 <- rk1[order(-rk1$Count),]
     rk1$rank <- 1:nrow(rk1)
 
-    #attribution des rangs créés aux PT (ou LLT) des deux tables
+    #attribution des rangs cr\u00e9\u00e9s aux PT (ou LLT) des deux tables
     df4_SOC_2 <- left_join(df4_SOC_2,rk1[,-2], by="COD")
     df4_SOC_1 <- left_join(df4_SOC_1,rk1[,-2], by="COD")
 
@@ -198,13 +198,13 @@ ButterflyStackAE <- function(baseEI, baseTr,
       group_by(COD) %>%
       filter(rank == min(rank))
 
-    #attribution des rangs créés aux PT (ou LLT) des deux tables
+    #attribution des rangs cr\u00e9\u00e9s aux PT (ou LLT) des deux tables
     df4_SOC_2 <- left_join(df4_SOC_2,rk2bis, by="COD")
     df4_SOC_1 <- left_join(df4_SOC_1,rk2bis, by="COD")
   } else return("Valeur non valide pour l'option rk")
 
 
-  ##### calculs pour la hauteur de chaque graphique top/bottom afin qu'elle s'adapte au nombre de PT affichées pour chaque SOC
+  ##### calculs pour la hauteur de chaque graphique top/bottom afin qu'elle s'adapte au nombre de PT affich\u00e9es pour chaque SOC
   df <- baseEI %>% distinct(SOC,COD)
 
   df <- df %>% group_by(SOC) %>% summarise(Count=n()) %>% arrange(desc(Count))
@@ -216,7 +216,7 @@ ButterflyStackAE <- function(baseEI, baseTr,
   NPT <- df_SOC$Count
 
   #calculs pour la hauteur
-  ht1 <- NPT/max_NPT-0.2 #0.15 est la hauteur fixe de la partie supérieure du graphique
+  ht1 <- NPT/max_NPT-0.2 #0.15 est la hauteur fixe de la partie sup\u00e9rieure du graphique
   ht2 <- 1-ht1-0.2
 
   ##### calculs pour la largeur de chaque graph (top droit/gauche) afin qu'elle s'adapte à la largeur du plus grand label de PT
@@ -231,7 +231,7 @@ ButterflyStackAE <- function(baseEI, baseTr,
   max2 <- max(tb_sum2$Count)/frq2$Freq[frq2$ARM=="armD"]
   max_lim <- max(max1,max2)
 
-  lim <- ceiling(max_lim*10)*10 #arrondi à la dizaine supérieur (0.86 devient 0.90 et 90%)
+  lim <- ceiling(max_lim*10)*10 #arrondi à la dizaine sup\u00e9rieur (0.86 devient 0.90 et 90%)
   seq_by <- ifelse(lim==100 | lim==80,20,ifelse(lim==90 | lim==60,15,ifelse(lim<=30,5,10)))
 
   p1 <- ggplot(df4_SOC_1, aes(fill=as.factor(Grade), x=pct, y=reorder(COD,desc(rank)))) +
@@ -270,9 +270,9 @@ ButterflyStackAE <- function(baseEI, baseTr,
           panel.grid.major.x = element_line(color = "grey", linewidth = 1))
 
   if (gsup==TRUE){
-    ########## Répartition des grades pour cette SOC
+    ########## R\u00e9partition des grades pour cette SOC
     ################## Creation graph ALL a ajouter au plot ######################
-    ## Une barre empilée pour chaque bras de traitement en dessous du graph
+    ## Une barre empil\u00e9e pour chaque bras de traitement en dessous du graph
     #groupe 1
     data_ALL_1 <- df4_SOC_1 %>%
       group_by(Grade) %>% summarise(Cnt=sum(Count))

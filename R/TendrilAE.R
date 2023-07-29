@@ -46,14 +46,14 @@ TendrilAE <- function(baseEI, baseTr, baseDates,
 
   #liste des groupes de traitement de la table df_Tr
   list_ARM <- unique(baseTr$ARM)
-  #Liste des id patients dans le bras numéro 1
+  #Liste des id patients dans le bras num\u00e9ro 1
   list_pat1 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[1]])
-  #Liste des id patients dans le bras numéro 2
+  #Liste des id patients dans le bras num\u00e9ro 2
   list_pat2 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[2]])
-  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont présents
+  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste o\u00f9 ils sont pr\u00e9sents
   baseEI$ARM <- ifelse(baseEI$id_pat %in% list_pat1, "arm1", "arm2")
 
-  #jointure pour récupérer la date de début de traitement de chaque individu
+  #jointure pour r\u00e9cup\u00e9rer la date de d\u00e9but de traitement de chaque individu
   baseEI2 <- left_join(baseEI %>% select(id_pat, ARM, COD, aedatestart),
                       baseDates %>% select(id_pat,tttdebdate),
                       by="id_pat", multiple="all")
@@ -71,7 +71,7 @@ TendrilAE <- function(baseEI, baseTr, baseDates,
   # baseEI2$ARM <- as.factor(baseEI2$ARM)
   baseEI2$COD <- as.factor(baseEI2$COD)
 
-  ##on remet mes valeurs d'origine pour les bras de traitement
+  ##on remet mes valeurs d\u0027origine pour les bras de traitement
   baseEI2$ARM <- ifelse(baseEI2$ARM=="arm1",as.character(list_ARM[1]),as.character(list_ARM[2]))
 
   # liste des patients avec leur bras de traitement
@@ -92,15 +92,15 @@ TendrilAE <- function(baseEI, baseTr, baseDates,
                           SubjList.treatment = "ARM")
 
   # vecteur pour les annotations
-  # dans data.Tendril$data on prend les coordonnées x et y du dernier point de chaque Terms
+  # dans data.Tendril$data on prend les coordonn\u00e9es x et y du dernier point de chaque Terms
   anno <- data.Tendril$data %>% group_by(Terms) %>% filter(StartDay==max(StartDay)) %>% arrange(Terms)
   anno <- anno %>% select(Terms,x,y)
-  labcap <- "Pas de différence visuelle entre les bras de traitement (couleur ou autre), c’est l’interprétation du graphique qui permet de savoir si un EI est plus présent dans un bras que dans l’autre.
-  La distance entre les points est proportionnelle à l’intervalle de temps entre les évènements.
-  L'angle est dicté par un paramètre de la fonction Tendril(), fixé à rotations = 4. La branche se dirigera vers la droite si l'évènement à lieu dans le premier groupe et à gauche s'il à lieu dans l'autre groupe.
-  L’évolution temporelle est représentée le long de chaque branche, c’est donc la forme qui est importante et qui porte l’information.
-  Les branches peuvent être colorés selon plusieurs variable, par exemple selon la p-value du chi-square de Pearson
-  ou selon le nombre d'évènement pour chaque type d'EI (branche) par un gradient de couleurs."
+  labcap <- "Pas de diff\u00e9rence visuelle entre les bras de traitement (couleur ou autre), c\u0027est l\u0027interpr\u00e9tation du graphique qui permet de savoir si un EI est plus pr\u00e9sent dans un bras que dans l\u0027autre.
+  La distance entre les points est proportionnelle \u00e0 l\u0027intervalle de temps entre les \u00e9v\u00e8nements.
+  L\u0027angle est dict\u00e9 par un param\u00e8tre de la fonction Tendril(), fix\u00e9 \u00e0 rotations = 4. La branche se dirigera vers la droite si l\u0027\u00e9v\u00e8nement \u00e0 lieu dans le premier groupe et \u00e0 gauche s\u0027il \u00e0 lieu dans l\u0027autre groupe.
+  L\u0027\u00e9volution temporelle est repr\u00e9sent\u00e9e le long de chaque branche, c\u0027est donc la forme qui est importante et qui porte l\u0027information.
+  Les branches peuvent \u00eatre color\u00e9s selon plusieurs variable, par exemple selon la p-value du chi-square de Pearson
+  ou selon le nombre d\u0027\u00e9v\u00e8nement pour chaque type d\u0027EI (branche) par un gradient de couleurs."
 
   if(is.null(coltype)){
     plot(data.Tendril) +
@@ -116,5 +116,5 @@ TendrilAE <- function(baseEI, baseTr, baseDates,
                        min.segment.length = 0.1, force = 8,
                        max.overlaps = 30,
                        direction="y")
-  } else return("Valeur non valide pour l'option coltype")
+  } else return("Valeur non valide pour l\u0027option coltype")
 }

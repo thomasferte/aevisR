@@ -45,27 +45,27 @@ TreemapAE <- function(baseEI,baseTr,
                               "ARM" = ARMvar)
   if (!is.null(TTTYN)) baseTr <- baseTr %>% rename("TTTYN" = TTTYN)
 
-  #on récupère le nombre de modalité de la variable Grade pour les échelles de couleurs des graphiques
+  #on r\u00e9cupère le nombre de modalit\u00e9 de la variable Grade pour les \u00e9chelles de couleurs des graphiques
   vect_grade <- sort(unique((baseEI$Grade)))
 
   list_ARM <- unique(baseTr$ARM)
   if (is.null(ARMe)) {
-    #Liste des id patients dans le bras numéro 1
+    #Liste des id patients dans le bras num\u00e9ro 1
     list_pat1 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[1]])
-    #Liste des id patients dans le bras numéro 2
+    #Liste des id patients dans le bras num\u00e9ro 2
     list_pat2 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[2]])
   } else if (!is.null(ARMe)){
     l2 <- unique(baseTr$ARM)
-    if (!(ARMe %in% l2)) return("Nom de bras de traitement non correct ou non présent dans la base.")
+    if (!(ARMe %in% l2)) return("Nom de bras de traitement non correct ou non pr\u00e9sent dans la base.")
     list_ARM[1] <- ARMe
     list_ARM[2] <- l2[l2 != ARMe]
 
-    #Liste des id patients dans le bras numéro 1
+    #Liste des id patients dans le bras num\u00e9ro 1
     list_pat1 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[1]])
-    #Liste des id patients dans le bras numéro 2
+    #Liste des id patients dans le bras num\u00e9ro 2
     list_pat2 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[2]])
   }
-  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont présents
+  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont pr\u00e9sents
   baseEI$ARM <- ifelse(baseEI$id_pat %in% list_pat1, "armH", "armB")
   baseTr$ARM <- ifelse(baseTr$ARM==list_ARM[1], "armH","armB")
 
@@ -100,8 +100,8 @@ TreemapAE <- function(baseEI,baseTr,
   }
 
 
-  #pour afficher le pourcentage de patient atteint en plus dans la Treemap (notamment dans les version avec 1 SOC selctionnée)
-  #on doit d'abord récupérer le nombre de patient atteint
+  #pour afficher le pourcentage de patient atteint en plus dans la Treemap (notamment dans les version avec 1 SOC selctionn\u00e9e)
+  #on doit d'abord r\u00e9cup\u00e9rer le nombre de patient atteint
   #en effet la variable count de df_AE3 correspont au nombre total d'EI on peut donc avoir plusieurs occurrence
   #pour calculer le pourcentage de patients on ne doit garder qu'une occurrence par patient
   df_AE4 <- baseEI %>%
@@ -110,17 +110,17 @@ TreemapAE <- function(baseEI,baseTr,
   df_AE4$pctPat <- round(ifelse(df_AE4$ARM=="armH", df_AE4$count/frq2$Freq[frq2$ARM=="armH"],
                                 df_AE4$count/frq2$Freq[frq2$ARM=="armB"])*100,1)
 
-  #on merge avec la table précédent pour attribuer les pourcentages
+  #on merge avec la table pr\u00e9c\u00e9dent pour attribuer les pourcentages
   data_plot <- merge(data_plot,df_AE4 %>% select(COD,ARM,pctPat), by=c("COD","ARM"))
 
   #caption
-  labcap <- "Chacun des rectangles principaux (1 par groupe de taitement) représente 100% des patients présents dans le groupe.
-  Ce rectangle est divisé selon les SOC, puis selon Terms (PT ou LLT)  en de petits rectangles représentant la part de patients ayant eu chaque EI.
-  Les sous-rectangles sont colorés selon le grade max enregistré pour chaque type d'EI selon la grille de couleurs choisie.
-  A noter, que les rectangles des SOC sont triés du coin inférieur gauche au coin supérieur droit du pourcentage plus plus grand au plus petit (idem pour les EIs à l'intérieur de chaque SOC)"
+  labcap <- "Chacun des rectangles principaux (1 par groupe de taitement) repr\u00e9sente 100% des patients pr\u00e9sents dans le groupe.
+  Ce rectangle est divis\u00e9 selon les SOC, puis selon Terms (PT ou LLT)  en de petits rectangles repr\u00e9sentant la part de patients ayant eu chaque EI.
+  Les sous-rectangles sont color\u00e9s selon le grade max enregistr\u00e9 pour chaque type d'EI selon la grille de couleurs choisie.
+  A noter, que les rectangles des SOC sont tri\u00e9s du coin inf\u00e9rieur gauche au coin sup\u00e9rieur droit du pourcentage plus plus grand au plus petit (idem pour les EIs \u00e0 l'int\u00e9rieur de chaque SOC)"
 
   if (!is.null(choixSOC)){
-    if (!(choixSOC %in% unique(data_plot$SOC))) return("SOC choisie non présente dans la base")
+    if (!(choixSOC %in% unique(data_plot$SOC))) return("SOC choisie non pr\u00e9sente dans la base")
     data_plot <- data_plot[data_plot$SOC==choixSOC,]
     data_plot$pctEvents <- round((data_plot$count / sum(data_plot$count))*100,1)
 

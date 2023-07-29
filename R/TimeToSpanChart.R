@@ -60,12 +60,12 @@ TimeToSpanChart <- function(baseEI, baseTr, baseDates,
 
   #liste des groupes de traitement de la table df_Tr
   list_ARM <- unique(baseTr$ARM)
-  #Liste des id patients dans le bras numéro 1
+  #Liste des id patients dans le bras num\u00e9ro 1
   list_pat1 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[1]])
-  #Liste des id patients dans le bras numéro 2
+  #Liste des id patients dans le bras num\u00e9ro 2
   list_pat2 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[2]])
 
-  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont présents
+  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont pr\u00e9sents
   baseEI$ARM <- ifelse(baseEI$id_pat %in% list_pat1, "arm1", "arm2")
   baseTr$ARM <- ifelse(baseTr$ARM==list_ARM[1], "arm1","arm2")
 
@@ -80,36 +80,36 @@ TimeToSpanChart <- function(baseEI, baseTr, baseDates,
   #on garde seulement les variable utiles
   df_AE2 <- baseEI %>% select(id_pat, COD, ARM, aedatestart, aedateend, Grade)
 
-  #on merge pour ajouter la date de pré-inclusion,et la date de fin de Treatment
+  #on merge pour ajouter la date de pr\u00e9-inclusion,et la date de fin de Treatment
   df_AE2 <- merge(df_AE2, baseDates %>% select(id_pat,tttdebdate,tttfindate), by="id_pat")
 
-  #on ne garde que le premier épisode de chaque EI par patients
+  #on ne garde que le premier \u00e9pisode de chaque EI par patients
   df_AE3 <- df_AE2 %>% group_by(id_pat, COD) %>% filter(aedatestart==min(aedatestart))
 
   if (unit=="month"){
-    #on calcule une variable pour la durée de l'EI
+    #on calcule une variable pour la dur\u00e9e de l'EI
     df_AE3$duration <- interval(df_AE3$aedatestart, df_AE3$aedateend) %/% months(1) +1
-    #on calcule une variable pour le délai d'appartition
+    #on calcule une variable pour le d\u00e9lai d'appartition
     df_AE3$onset <- interval(df_AE3$tttdebdate, df_AE3$aedatestart) %/% months(1) +1
   } else if (unit %in% c("weeks","days")){
-    #on calcule une variable pour la durée de l'EI
+    #on calcule une variable pour la dur\u00e9e de l'EI
     df_AE3$duration <- as.numeric(difftime(df_AE3$aedateend,df_AE3$aedatestart,units = unit))
-    #on calcule une variable pour le délai d'appartition
+    #on calcule une variable pour le d\u00e9lai d'appartition
     df_AE3$onset <- as.numeric(difftime(df_AE3$aedatestart,df_AE3$tttdebdate,units = unit))
   } else return("Valeur non valide pour l'option unit")
 
-  # on choisit les EIs les plus fréquents (si null pour listEI)
+  # on choisit les EIs les plus fr\u00e9quents (si null pour listEI)
   tb_freq <- baseEI[baseEI$COD!="",] %>% group_by(COD) %>% summarise(count=n()) %>% arrange(desc(count))
 
   if (is.null(listEI)){
     l_COD <- tb_freq$COD[c(1:20)]
   } else if (!is.null(listEI)){
-    if (FALSE %in% (listEI %in% tb_freq$COD)) return("Au moins un des EI demandés n'est pas présent dans la base.")
-    l_COD <- listEI #sinon on prend la liste donnée dans listEI
+    if (FALSE %in% (listEI %in% tb_freq$COD)) return("Au moins un des EI demand\u00e9s n'est pas pr\u00e9sent dans la base.")
+    l_COD <- listEI #sinon on prend la liste donn\u00e9e dans listEI
   }
 
 
-  ### mediane time to first onset sur chaque EI de la liste définie avec les EIs les plus fréquents
+  ### mediane time to first onset sur chaque EI de la liste d\u00e9finie avec les EIs les plus fr\u00e9quents
   df_plot <- setNames(data.frame(matrix(ncol = 4, nrow = 0)), c("COD", "ARM", "med_onset", "med_duration"))
   for (p in l_COD){
     df <- subset(df_AE3, df_AE3$COD==p)
@@ -128,13 +128,13 @@ TimeToSpanChart <- function(baseEI, baseTr, baseDates,
                         row.names = NULL)
 
     dfx <- rbind(dfx_1, dfx_2)
-    # A chaque PT concaténation des tables
+    # A chaque PT concat\u00e9nation des tables
     df_plot <- rbind(df_plot,dfx)
   }
 
   ### Selectionner les lignes avec un grade >=3
   df_AE4 <- subset(df_AE2,df_AE2$Grade >= 3)
-  #on calcule une variable pour le délai d'apparition du grade le plus elevé
+  #on calcule une variable pour le d\u00e9lai d'apparition du grade le plus elev\u00e9
   if (unit=="month"){
     df_AE4$G345 <- interval(df_AE4$tttdebdate,df_AE4$aedatestart) %/% months(1) +1
   } else if (unit %in% c("weeks","days")){
@@ -146,7 +146,7 @@ TimeToSpanChart <- function(baseEI, baseTr, baseDates,
 
   ### Selectionner les lignes avec un grade >=4
   df_AE5 <- subset(df_AE2,df_AE2$Grade >= 4)
-  #on calcule une variable pour le délai d'apparition du grade le plus elevé
+  #on calcule une variable pour le d\u00e9lai d'apparition du grade le plus elev\u00e9
   if (unit=="month"){
     df_AE5$G45 <- interval(df_AE5$tttdebdate,df_AE5$aedatestart) %/% months(1) +1
   } else if (unit %in% c("weeks","days")){
@@ -156,7 +156,7 @@ TimeToSpanChart <- function(baseEI, baseTr, baseDates,
   df_AE5 <- df_AE5 %>% group_by(COD,ARM) %>% dplyr::summarise(med_G45 = median(G45))
   df_plot <- left_join(df_plot,df_AE5 %>% select(COD,ARM,med_G45), by=c("COD","ARM"))
 
-  ###calcul temps médian de Treatment dans chacun des groupe et ajout à la table df_plot
+  ###calcul temps m\u00e9dian de Treatment dans chacun des groupe et ajout à la table df_plot
   #groupe1
   df_1 <- subset(df_AE2, df_AE2$ARM=="arm1")
   if (unit=="month"){

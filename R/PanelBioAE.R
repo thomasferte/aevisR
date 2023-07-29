@@ -44,7 +44,7 @@ PanelBioAE <- function(baseBio, idvar, biodate_var, unitbio_var,  biolib_var,
     Biopat <- subset(Biopat, biodate<=lim)
   }
   if (!is.null(list_Bio)) {
-    if (FALSE %in% (list_Bio %in% unique(Biopat$lib))) return("Au moins une des biologie demandée n'est pas disponible dans la base")
+    if (FALSE %in% (list_Bio %in% unique(Biopat$lib))) return("Au moins une des biologie demand\u00e9e n'est pas disponible dans la base")
     Biopat <- Biopat[Biopat$lib %in% list_Bio,]
   }
   lab_biolib <- c(unique(paste(Biopat$lib[Biopat$unitbio!=""],"\n (",Biopat$unitbio[Biopat$unitbio!=""],")")))

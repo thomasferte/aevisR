@@ -98,7 +98,7 @@ PatientSpanAE <- function(baseEI, baseTr, baseDates, baseBio,
   #liste des groupes de traitement de la table baseTr
   list_ARM <- unique(baseTr$ARM)
 
-  #on récupère le nombre de modalité de la variable grade pour les échelles de couleurs des graphiques
+  #on r\u00e9cupère le nombre de modalit\u00e9 de la variable grade pour les \u00e9chelles de couleurs des graphiques
   vect_grade <- sort(unique((baseEI$grade)))
   # On stock son bras de traitement pour l'afficher dans le graphique
   ARMp <- unique(baseTr$ARM[baseTr$id_pat == choixUSU])
@@ -113,12 +113,12 @@ PatientSpanAE <- function(baseEI, baseTr, baseDates, baseBio,
 
   # si pas de date de fin et ongo yes alors on met la date la plus lointaine pour ce patient
   # on indiquera par une flèche sur le graphique que cet EI est en cours
-  # si pas de date de fin et ongo yes alors on met la date de début
+  # si pas de date de fin et ongo yes alors on met la date de d\u00e9but
   df_pat$aedateend[is.na(df_pat$aedateend) & df_pat$ongo=="Yes"] <- df_pat$aedatestart[is.na(df_pat$aedateend) & df_pat$ongo=="Yes"]
 
   # si on ne veut pas le suivi
   if (suivi==FALSE){
-    #si date de fin sup mais pas date de début alors on change la date de fin avec la date de suivi
+    #si date de fin sup mais pas date de d\u00e9but alors on change la date de fin avec la date de suivi
     for (i in 1:nrow(df_pat)){
       if(df_pat$aedatestart[i] < suidate & df_pat$aedateend[i] > suidate & !is.na(df_pat$aedateend[i])){
         df_pat$aedateend[i]<-suidate
@@ -126,11 +126,11 @@ PatientSpanAE <- function(baseEI, baseTr, baseDates, baseBio,
         df_pat$outcome[i]<-NA
       }
     }
-    #on ne garde que ceux avec date de début inf à date de suivi et date de fin inf ou égale à la date de suivi
+    #on ne garde que ceux avec date de d\u00e9but inf à date de suivi et date de fin inf ou \u00e9gale à la date de suivi
     df_pat <- subset(df_pat,(df_pat$aedateend <= suidate & df_pat$aedatestart <= suidate) | is.na(df_pat$aedateend))
   }
 
-  # transformer les dates en jours depuis la date de début de traitement
+  # transformer les dates en jours depuis la date de d\u00e9but de traitement
   df_pat$aestartdate <- as.numeric(df_pat$aedatestart - tttdebdate)
   df_pat$aeenddate<- as.numeric(df_pat$aedateend - tttdebdate)
   df_pat <- df_pat %>% select(-c(aedatestart,aedateend, id_pat))
@@ -146,14 +146,14 @@ PatientSpanAE <- function(baseEI, baseTr, baseDates, baseBio,
   table_rk <- rbind(table_rk,table_SOC)
   table_rk$grade <- as.integer(table_rk$grade)
   table_rk <- table_rk %>% arrange(SOC, COD, grade)
-  table_rk$rank <- 6:(nrow(table_rk)+5) #à partir du rang 6 car avant on a les traitements (x4) et la bio (traités par la suite)
+  table_rk$rank <- 6:(nrow(table_rk)+5) #à partir du rang 6 car avant on a les traitements (x4) et la bio (trait\u00e9s par la suite)
 
 
   df_pat <- full_join(df_pat %>% select(-SOC), table_rk %>% select(-SOC), by=c("COD","grade"), multiple="all")
 
 
   ############ table traitement ##########
-  # comme pour la table EI on selectionne les traitements associés au patients choisi
+  # comme pour la table EI on selectionne les traitements associ\u00e9s au patients choisi
   df_Trpat <- subset(baseTr, baseTr$id_pat==choixUSU)
   # calcul en jour depuis la rando pour chaque traitement
   df_Trpat$visdate <- as.Date(df_Trpat$visdate, format = "%d/%m/%Y")
@@ -183,7 +183,7 @@ PatientSpanAE <- function(baseEI, baseTr, baseDates, baseBio,
 
   ########################################################################
   ## combinaison des trois tables avec renommage des colonnes
-  #Creation d'une table pour accueilir toutes les données nécessaires
+  #Creation d'une table pour accueilir toutes les donn\u00e9es n\u00e9cessaires
   dfxpat <- data.frame(aeterm=df_pat$COD,
                        grade=df_pat$grade,
                        ongo=df_pat$ongo,
@@ -223,7 +223,7 @@ PatientSpanAE <- function(baseEI, baseTr, baseDates, baseBio,
     df_num$num[i]=cpt
   }
 
-  #A chaque numéro on récupère le min et le max qui seront donc les limites des rectangles pour l'axes des ordonnées (représenté par les COD)
+  #A chaque num\u00e9ro on r\u00e9cupère le min et le max qui seront donc les limites des rectangles pour l'axes des ordonn\u00e9es (repr\u00e9sent\u00e9 par les COD)
   df_rect <- setNames(data.frame(matrix(ncol = 5, nrow = 0)), c("grp", "aeterm","aeterm_start", "aeterm_end"))
   for(i in unique(df_num$num)){
     dfx_num <- subset(df_num, df_num$num==i)
@@ -257,13 +257,13 @@ PatientSpanAE <- function(baseEI, baseTr, baseDates, baseBio,
                               ifelse(df_plot$ttt1=="No" & df_plot$ttt2 == "Yes","R","P")))
 
   if (!is.null(baseBio)){
-    ## on retire les résultats de biologie après le dernier EI
+    ## on retire les r\u00e9sultats de biologie après le dernier EI
     datlim <- seqx[length(seqx)]
     df_plot <- df_plot[!(df_plot$biodat > datlim & !is.na(df_plot$biodat > datlim)),]
   }
 
   timeline <- ggplot(df_plot, aes(x=reorder(aeterm,desc(rank)))) +
-    #fond rectangles pour séparer les SOC
+    #fond rectangles pour s\u00e9parer les SOC
     geom_rect(aes(xmin = aeterm_start,xmax = aeterm_end),
               ymin = -Inf, ymax = Inf,
               colour=ifelse(df_plot$grp==1, "gray91","white"),
@@ -285,10 +285,10 @@ PatientSpanAE <- function(baseEI, baseTr, baseDates, baseBio,
     geom_hline(yintercept = as.numeric(suidate - tttdebdate), color="red", lty=1, linewidth=0.5) +
     geom_text(x=Inf,y=as.numeric(suidate - tttdebdate),label = "Suivi", col="red", size=4, vjust=-0.3, hjust=1.5, angle=90) +
 
-    #ligne verticale pleine noir pour le jours 0 : début du traitement
+    #ligne verticale pleine noir pour le jours 0 : d\u00e9but du traitement
     geom_hline(yintercept = 0, color="gray20", lty=1, linewidth=0.5) +
 
-    #segments représentants chaque EI (la couleur représentant le grade)
+    #segments repr\u00e9sentants chaque EI (la couleur repr\u00e9sentant le grade)
     geom_segment(aes(y=aestartdate, yend=aeenddate,
                      x=aeterm,xend=aeterm,
                      colour=grade),
@@ -301,7 +301,7 @@ PatientSpanAE <- function(baseEI, baseTr, baseDates, baseBio,
                  aes(y=aestartdate, yend=aeenddate,x=aeterm,xend=aeterm, colour=serious),linewidth=1) +
     scale_colour_manual(name="",breaks = "Yes",labels = "Serious",values = "black") +
 
-    #points pour le début de l'EI (la couleur représantant le liens avec les traitements)
+    #points pour le d\u00e9but de l'EI (la couleur repr\u00e9santant le liens avec les traitements)
     geom_point(data=df_plot %>% filter(ltype!="B"),
                aes(y=aestartdate,x=reorder(aeterm,desc(rank)),fill=ltype),
                color="black",size=3,shape=21)+
@@ -309,7 +309,7 @@ PatientSpanAE <- function(baseEI, baseTr, baseDates, baseBio,
                       c(list_ARM[1],list_ARM[2],"Both"),
                       values = c('deepskyblue2', 'red', 'purple')) +
 
-    #point pour la fin de l'EI (la forme représentant l'outcome de l'EI)
+    #point pour la fin de l'EI (la forme repr\u00e9sentant l'outcome de l'EI)
     geom_point(aes(y=aeenddate, x=reorder(aeterm,desc(rank)), shape = factor(outcome)),size=3, color="black")+
     scale_shape_manual(breaks = c("Recovered", "Recovered with sequelea", "Worsening", "Not recovered", "Death"),
                        values = c("Recovered" = 1, "Recovered with sequelea" = 10,"Worsening" = 0, "Not recovered" = 7, "Death"=8)) +
@@ -319,18 +319,18 @@ PatientSpanAE <- function(baseEI, baseTr, baseDates, baseBio,
                  aes(x=aeterm,xend=aeterm,y=aeenddate,yend=aeenddate+7),
                  arrow = arrow(length=unit(0.2,"cm"), type = "closed"),color="black",linewidth=0.5) +
 
-    #points représentant le moment de chaque prise de chaque traitement
+    #points repr\u00e9sentant le moment de chaque prise de chaque traitement
     geom_point(aes(y=tttdat,x=aeterm),color='black',
                size=3,shape=20,show.legend = F) +
 
-    #lignes verticales pour chaque prise de traitement (pointillés noir)
+    #lignes verticales pour chaque prise de traitement (pointill\u00e9s noir)
     geom_hline(yintercept =vect2, lty=3, linewidth = 0.5, color = "gray20") +
 
-    # rectangle blanc par dessus les lignes pour faire un fond aux résultats de bio (plus lisible)
+    # rectangle blanc par dessus les lignes pour faire un fond aux r\u00e9sultats de bio (plus lisible)
     {if (bio==TRUE) geom_rect(xmin = "Bio / Hemo", xmax = "Bio / Hemo", ymin = -Inf,ymax = Inf,
               colour="white",fill="white",linewidth=10,show.legend = F)} +
 
-    #labels pour les résultats d'analyse
+    #labels pour les r\u00e9sultats d'analyse
     {if (bio==TRUE) geom_text(aes(y=biodat, x=aeterm, label=biores),size=3, angle=45,fontface="bold",
               colour=ifelse(df_plot$colbio==2,"red",ifelse(df_plot$colbio==1,'red3','black')))} +
 

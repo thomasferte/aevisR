@@ -46,15 +46,15 @@ TendrilAETimeSeries <- function(baseEI,baseTr, baseDates,
 
   #liste des groupes de traitement de la table df_Tr
   list_ARM <- unique(baseTr$ARM)
-  #Liste des id patients dans le bras numéro 1
+  #Liste des id patients dans le bras num\u00e9ro 1
   list_pat1 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[1]])
-  #Liste des id patients dans le bras numéro 2
+  #Liste des id patients dans le bras num\u00e9ro 2
   list_pat2 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[2]])
-  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont présents
+  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont pr\u00e9sents
   baseEI$ARM <- ifelse(baseEI$id_pat %in% list_pat1, "arm1", "arm2")
 
 
-  #jointure pour récupérer la date de début de traitement de chaque individu
+  #jointure pour r\u00e9cup\u00e9rer la date de d\u00e9but de traitement de chaque individu
   baseEI2 <- left_join(baseEI %>% select(id_pat, ARM, COD, aedatestart),
                       baseDates %>% select(id_pat,tttdebdate), by="id_pat")
 
@@ -92,7 +92,7 @@ TendrilAETimeSeries <- function(baseEI,baseTr, baseDates,
                           SubjList.subject = "id_pat",
                           SubjList.treatment = "ARM")
 
-  #table de données pour le TimeSeries
+  #table de donn\u00e9es pour le TimeSeries
   t <- plot_timeseries(data.Tendril)
 
   if (!is.null(CODlist)){
@@ -109,9 +109,9 @@ TendrilAETimeSeries <- function(baseEI,baseTr, baseDates,
       theme(axis.text = element_text(size=12), #taille des labels des axes
             axis.title = element_text(size = 12), #taille des titres des axes
             panel.background = element_blank(), #pas d'arrière plan
-            panel.grid.major = element_line(color = "gray60", linewidth = 0.5, linetype = 1), #grille de lecture de couleur grise et d'épaisseur 0.5
+            panel.grid.major = element_line(color = "gray60", linewidth = 0.5, linetype = 1), #grille de lecture de couleur grise et d'\u00e9paisseur 0.5
             axis.line = element_line(color="gray30"), #couleur de la ligne de chacun des axes
-            legend.position = "none" #ne pas afficher la légende
+            legend.position = "none" #ne pas afficher la l\u00e9gende
       )
 
   } else  if (is.null(CODlist)) {
@@ -131,9 +131,9 @@ TendrilAETimeSeries <- function(baseEI,baseTr, baseDates,
       theme(axis.text = element_text(size=12), #taille des labels des axes
             axis.title = element_text(size = 12), #taille des titres des axes
             panel.background = element_blank(), #pas d'arrière plan
-            panel.grid.major = element_line(color = "gray60", linewidth = 0.5, linetype = 1), #grille de lecture de couleur grise et d'épaisseur 0.5
+            panel.grid.major = element_line(color = "gray60", linewidth = 0.5, linetype = 1), #grille de lecture de couleur grise et d'\u00e9paisseur 0.5
             axis.line = element_line(color="gray30"), #couleur de la ligne de chacun des axes
-            legend.position = "none" #ne pas afficher la légende
+            legend.position = "none" #ne pas afficher la l\u00e9gende
       )
   }
 

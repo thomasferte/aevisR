@@ -71,12 +71,12 @@ LineErrorBars <- function(baseEI,baseTr,baseDates,
 
   #liste des groupes de traitement de la table df_Tr
   list_ARM <- unique(baseTr$ARM)
-  #Liste des id patients dans le bras numéro 1
+  #Liste des id patients dans le bras num\u00e9ro 1
   list_pat1 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[1]])
-  #Liste des id patients dans le bras numéro 2
+  #Liste des id patients dans le bras num\u00e9ro 2
   list_pat2 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[2]])
 
-  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont présents
+  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont pr\u00e9sents
   baseEI$ARM <- ifelse(baseEI$id_pat %in% list_pat1, "arm1", "arm2")
   baseTr$ARM <- ifelse(baseTr$ARM==list_ARM[1], "arm1","arm2")
 
@@ -88,30 +88,30 @@ LineErrorBars <- function(baseEI,baseTr,baseDates,
   USU_distinct  <- df_Tr2  %>% select(id_pat, ARM) %>% distinct(id_pat, ARM)
   frq2 <- data.frame(xtabs(~ ARM, data=USU_distinct))
 
-  #on merge pour ajouter la date de rando, la date de pré-inclusion,et la date de fin de traitement
+  #on merge pour ajouter la date de rando, la date de pr\u00e9-inclusion,et la date de fin de traitement
   df_AE2 <- merge(baseEI, baseDates, by="id_pat")
 
   # si pas de date de fin ............
   # df_AE2$aedateend[is.na(df_AE2$aedateend)] <- df_AE2$tttfindate[is.na(df_AE2$aedateend)]
 
-  # retirer ceux terminés avant la date de début de traitement
+  # retirer ceux termin\u00e9s avant la date de d\u00e9but de traitement
   df_AE3 <- subset(df_AE2,!(df_AE2$aedateend < df_AE2$tttdebdate))
-  # et ceux survenus après la date de fin de traitement
+  # et ceux survenus apr\u00e8s la date de fin de traitement
   if(unit=="cycle" | (unit != "cycle" & suivi==FALSE)) df_AE3 <- subset(df_AE3,!(df_AE3$aedatestart > df_AE3$tttfindate))
 
   #################################################
-  #création de la base avec les unités de temps
+  #cr\u00e9ation de la base avec les unit\u00e9s de temps
   #################################################
   if (unit=="cycle"){
-    if (is.null(visitedate_var) | is.null(visitnum_var)) return("Si vous choisissez d'afficher des cycles alors les arguments visitdate_var et visitnum_var doivent tous les deux être renseignés")
-    #Récupération d'une date par cycle pour chaque individu
+    if (is.null(visitedate_var) | is.null(visitnum_var)) return("Si vous choisissez d'afficher des cycles alors les arguments visitdate_var et visitnum_var doivent tous les deux \u00eatre renseign\u00e9s")
+    #R\u00e9cup\u00e9ration d'une date par cycle pour chaque individu
     df_unitdate <- df_Tr2 %>% select(id_pat, visnum, visdate) %>%
       distinct(id_pat, visnum, visdate) %>%
       group_by(id_pat, visnum,visdate)
     df_unitdate <- df_unitdate %>% filter(!is.na(visdate))
     df_unitdate <- df_unitdate %>% group_by(id_pat,visnum) %>% filter(visdate==min(visdate))
 
-    # Ajout d'une colonne avec la date de fin du cycle qui sera la jour précédent le TTT du cycle suivant
+    # Ajout d'une colonne avec la date de fin du cycle qui sera la jour pr\u00e9c\u00e9dent le TTT du cycle suivant
     df_unitdate$DAT_FIN_CYCLE = NA
     for (i in 1:(nrow(df_unitdate)-1)) df_unitdate$DAT_FIN_CYCLE[i] <- df_unitdate$visdate[i+1]
     df_unitdate$DAT_FIN_CYCLE <- as.Date(df_unitdate$DAT_FIN_CYCLE, origin = "1970-01-01")
@@ -130,7 +130,7 @@ LineErrorBars <- function(baseEI,baseTr,baseDates,
     } else if (unit=="quarter") {pas = 90
     } else if (unit=="halfyear") {pas= 180
     } else if (unit=="year") {pas = 365}
-    #création d'une table avec les dates pour chaque patient des limites pour les semaine, mois, ou années en fonction de unit
+    #cr\u00e9ation d'une table avec les dates pour chaque patient des limites pour les semaine, mois, ou ann\u00e9es en fonction de unit
     df_AE_endmax <- df_AE3 %>% select(id_pat, aedateend, tttfindate) %>%
       group_by(id_pat)
     if (nrow(df_AE_endmax==1) & (TRUE %in% is.na(df_AE_endmax$aedateend))) {
@@ -165,13 +165,13 @@ LineErrorBars <- function(baseEI,baseTr,baseDates,
   } else return("Valeur non valide pour l'option unit")
 
 
-  ## Attribuer un (ou plusieurs) cycle à chaque EI de la base df_AE en fonction de la date d'occurence et du patient concerné
-  ## si on fait full_join on aura aussi les individus qui n'ont pas eu l'EI anaemia et présents dans la table df_Tr3
+  ## Attribuer un (ou plusieurs) cycle \u00e0 chaque EI de la base df_AE en fonction de la date d'occurence et du patient concern\u00e9
+  ## si on fait full_join on aura aussi les individus qui n'ont pas eu l'EI anaemia et pr\u00e9sents dans la table df_Tr3
   ## (comme dans le Alluvial)
   df_unitdate$id_pat <- as.character(df_unitdate$id_pat)
   df_AE4 <- left_join(df_AE3, df_unitdate, by = "id_pat", multiple = "all")
 
-  #on garde les grades pour les lignes où la date de début et de fin de l'EI correspondent au cycle
+  #on garde les grades pour les lignes où la date de d\u00e9but et de fin de l'EI correspondent au cycle
   #sinon on remplace par 0 pour indiquer qu'a ce cycle le patient n'avait pas d'EI (grade 0)
   df_AE4$Grade[ ((df_AE4$aedatestart > df_AE4$DAT_FIN_CYCLE) |
                       (df_AE4$aedateend < df_AE4$DAT_DEB_CYCLE))] =0
@@ -182,9 +182,9 @@ LineErrorBars <- function(baseEI,baseTr,baseDates,
   ###################################################
   ### Sous groupe Overall
   ###################################################
-  #Selection des variables d'interêt
-  # fréquence par PT et par cycle
-  frq1 <- df_AE4 %>% select(id_pat,ARM,COD, visnum) %>% distinct(id_pat, ARM, COD, visnum) #liste des EIs distincts pour chaque patient en précisant son bras de traitement
+  #Selection des variables d'inter\u00eat
+  # fr\u00e9quence par PT et par cycle
+  frq1 <- df_AE4 %>% select(id_pat,ARM,COD, visnum) %>% distinct(id_pat, ARM, COD, visnum) #liste des EIs distincts pour chaque patient en pr\u00e9cisant son bras de traitement
   frq1 <- data.frame(xtabs(~ COD + ARM + visnum, data = frq1)) #frequence de chaque type d'EI dans chacun des bras de traitement
   frq1 <- frq1 %>% pivot_wider(names_from = ARM, values_from = Freq)
 
@@ -192,17 +192,17 @@ LineErrorBars <- function(baseEI,baseTr,baseDates,
   #######################################################
   ### Subgroup (<= grade x) pour chaque cycle
   #######################################################
-  # table avec le compte d'EIs de grade >= x à chaque cycle
-  if(grd > max(baseEI$Grade)) return("Grade non présent dans la base")
-  if(grd == 1) return("Impossible de comparer les EIs de grade supérieur ou égale à 1 à tous les EIs, car il représentent toute la base de donnée")
+  # table avec le compte d'EIs de grade >= x \u00e0 chaque cycle
+  if(grd > max(baseEI$Grade)) return("Grade non pr\u00e9sent dans la base")
+  if(grd == 1) return("Impossible de comparer les EIs de grade sup\u00e9rieur ou \u00e9gale \u00e0 1 \u00e0 tous les EIs, car il repr\u00e9sentent toute la base de donn\u00e9e")
   df_AE5 <- subset(df_AE4, df_AE4$Grade >=grd)
   #on garde une occurence unique pour chaque id_pat et COD
   df_AE5 <- df_AE5 %>% select(-Grade) %>% distinct(id_pat,ARM,COD, visnum)
-  # fréquence par PT et par cycle pour les EIs de grade <=x
+  # fr\u00e9quence par PT et par cycle pour les EIs de grade <=x
   frq2 <- data.frame(xtabs(~ COD + ARM + visnum, data=df_AE5))
   frq2 <- frq2 %>% pivot_wider(names_from = ARM, values_from = Freq)
 
-  #### on merge les deux tables créées frq1 et frq2 pour pouvoir calculer le RD
+  #### on merge les deux tables cr\u00e9\u00e9es frq1 et frq2 pour pouvoir calculer le RD
   frq <- left_join(frq1, frq2, by=c("COD","visnum")) %>% mutate(across(where(is.numeric),~replace_na(.x,0)))
   names(frq) <- c("COD","visnum","G1tot","G2tot","G1grd","G2grd")
 
@@ -252,10 +252,10 @@ LineErrorBars <- function(baseEI,baseTr,baseDates,
 
   #### calcul du RD
   ## on cible tout  d'abord l'EI choisi
-  if (!(choixEI %in% unique(frq$COD))) return("EI choisit non présent dans la base")
+  if (!(choixEI %in% unique(frq$COD))) return("EI choisit non pr\u00e9sent dans la base")
   frq <- frq[frq$COD == choixEI,]
 
-  #Creation d'une table pour accueilir toutes les données nécessaires
+  #Creation d'une table pour accueilir toutes les donn\u00e9es n\u00e9cessaires
   dfx_all <- setNames(data.frame(matrix(ncol = 4, nrow = 0)), c("visnum","CI_1", "CI_2", "RD"))
 
   for (c in unique(frq$visnum)){
@@ -303,9 +303,9 @@ LineErrorBars <- function(baseEI,baseTr,baseDates,
   }
 
   if(caption==TRUE){
-    labcap <- paste("Ce graph représente le RD (avec IC 95%) d'avoir, pour l'EI choisit,
-    un grade >= x (ici", grd ,") par rapport à tout grade entre les deux groupes de traitement
-    pour une période données (cycle, semaine...).")
+    labcap <- paste("Ce graph repr\u00e9sente le RD (avec IC 95%) d'avoir, pour l'EI choisit,
+    un grade >= x (ici", grd ,") par rapport \u00e0 tout grade entre les deux groupes de traitement
+    pour une p\u00e9riode donn\u00e9es (cycle, semaine...).")
     p <- p + labs(caption = labcap)
   }
 

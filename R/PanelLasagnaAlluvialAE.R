@@ -134,7 +134,7 @@ PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
                                     "tttdebdate" = tttdebdate_var,
                                     "tttfindate" = tttfindate_var)
 
-  #on récupère le nombre de modalité de la variable grade pour les échelles de couleurs des graphiques
+  #on r\u00e9cupère le nombre de modalit\u00e9 de la variable grade pour les \u00e9chelles de couleurs des graphiques
   vect_grade <- sort(unique((baseEI$grade)))
 
 
@@ -142,62 +142,62 @@ PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
   #liste des groupes de traitement de la table baseTr
   list_ARM <- unique(baseTr$ARM)
   if (is.null(ARMe)) {
-    #Liste des id patients dans le bras numéro 1
+    #Liste des id patients dans le bras num\u00e9ro 1
     list_pat1 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[1]])
-    #Liste des id patients dans le bras numéro 2
+    #Liste des id patients dans le bras num\u00e9ro 2
     list_pat2 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[2]])
   } else if (!is.null(ARMe)){
     l2 <- unique(baseTr$ARM)
-    if (!(ARMe %in% l2)) return("Nom de bras de traitement non correct ou non présent dans la base.")
+    if (!(ARMe %in% l2)) return("Nom de bras de traitement non correct ou non pr\u00e9sent dans la base.")
     list_ARM[1] <- ARMe
     list_ARM[2] <- l2[l2 != ARMe]
 
-    #Liste des id patients dans le bras numéro 1
+    #Liste des id patients dans le bras num\u00e9ro 1
     list_pat1 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[1]])
-    #Liste des id patients dans le bras numéro 2
+    #Liste des id patients dans le bras num\u00e9ro 2
     list_pat2 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[2]])
   }
-  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont présents
+  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont pr\u00e9sents
   baseEI$ARM <- ifelse(baseEI$id_pat %in% list_pat1, "armG", "armD")
   baseTr$ARM <- ifelse(baseTr$ARM==list_ARM[1], "armG","armD")
 
   #### Ciblage sur l'EI #####
   baseEI2 <- baseEI %>% select(id_pat, COD ,grade, aedatestart, aedateend,ARM)
-  if (!(choixEI %in% baseEI2$COD)) return("COD choisit non présent dans la base de donnée")
+  if (!(choixEI %in% baseEI2$COD)) return("COD choisit non pr\u00e9sent dans la base de donn\u00e9e")
   baseEI2 <- baseEI2[baseEI2$COD == choixEI,] %>% select(-COD)
 
 
-  #on merge pour ajouter les différentes dates dans la table des EIs
+  #on merge pour ajouter les diff\u00e9rentes dates dans la table des EIs
   baseEI2 <- merge(baseEI2, baseDates, by="id_pat")
 
-  #on vérifie que les dates sont bien au format date sinon message d'erreur
+  #on v\u00e9rifie que les dates sont bien au format date sinon message d'erreur
   if (is.Date(baseEI2$tttdebdate) == FALSE | is.Date(baseEI2$tttfindate) == FALSE | is.Date(baseEI2$aedateend) == FALSE | is.Date(baseEI2$aedatestart) == FALSE){
     return("Au moins une des variable date n'est pas au format Date")
   }
 
   # si pas de date de fin et ongo yes alors on met la date la date de suivie
-  # autrement dit la plus lointaine dans le graph pour que cet EI soit affiché sur tous les cycles qui suivent sa date de début
+  # autrement dit la plus lointaine dans le graph pour que cet EI soit affich\u00e9 sur tous les cycles qui suivent sa date de d\u00e9but
   # baseEI2 <- baseEI2[!(is.na(baseEI2$aedateend) & baseEI2$ongo!="Yes"),] # on retire les lignes qui n'ont pas de ongoing yes et pas de date de fin
   # baseEI2$aedateend[is.na(baseEI2$aedateend)] <- baseEI2$tttfindate[is.na(baseEI2$aedateend)]
 
-  # retirer ceux terminés avant la date de début de traitement
+  # retirer ceux termin\u00e9s avant la date de d\u00e9but de traitement
   df_AE3 <- subset(baseEI2,!(baseEI2$aedateend < baseEI2$tttdebdate) | is.na(baseEI2$aedateend))
-  # et ceux survenus après la date de fin de traitement seulement si suivi==FALSE et unit différent de cycle
+  # et ceux survenus après la date de fin de traitement seulement si suivi==FALSE et unit diff\u00e9rent de cycle
   if(unit=="cycle" | (unit != "cycle" & suivi==FALSE)) df_AE3 <- subset(df_AE3,!(df_AE3$aedatestart > df_AE3$tttfindate))
 
 
   #################################################
-  #création de la base avec les unités de temps
+  #cr\u00e9ation de la base avec les unit\u00e9s de temps
   ########################################################################################
   if (unit=="cycle"){
-    #Récupération d'une date par cycle/période pour chaque individu (car peut y avoir plusieurs dates par cycle/période)
+    #R\u00e9cup\u00e9ration d'une date par cycle/p\u00e9riode pour chaque individu (car peut y avoir plusieurs dates par cycle/p\u00e9riode)
     df_unitdate <- baseTr %>% select(id_pat, visnum, visdate) %>%
       distinct(id_pat, visnum, visdate) %>%
       group_by(id_pat, visnum,visdate)
     df_unitdate <- df_unitdate %>% filter(!is.na(visdate))
     df_unitdate <- df_unitdate %>% group_by(id_pat,visnum) %>% filter(visdate==min(visdate))
 
-    # Ajout d'une colonne avec la date de fin du cycle qui sera la jour précédent le TTT du cycle suivant
+    # Ajout d'une colonne avec la date de fin du cycle qui sera la jour pr\u00e9c\u00e9dent le TTT du cycle suivant
     df_unitdate$DAT_FIN_CYCLE = NA
     for (i in 1:(nrow(df_unitdate)-1)) df_unitdate$DAT_FIN_CYCLE[i] <- df_unitdate$visdate[i+1]
     df_unitdate$DAT_FIN_CYCLE <- as.Date(df_unitdate$DAT_FIN_CYCLE, origin = "1970-01-01")
@@ -217,7 +217,7 @@ PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
     } else if (unit=="quarter") {pas = 90
     } else if (unit=="halfyear") {pas= 180
     } else if (unit=="year") {pas = 365}
-    #création d'une table avec les dates pour chaque patient des limites pour les semaine, mois, ou années en fonction de unit
+    #cr\u00e9ation d'une table avec les dates pour chaque patient des limites pour les semaine, mois, ou ann\u00e9es en fonction de unit
     df_AE_endmax <- df_AE3 %>% select(id_pat, aedateend, tttfindate) %>%
       group_by(id_pat)
     if (nrow(df_AE_endmax==1) & (TRUE %in% is.na(df_AE_endmax$aedateend))) {
@@ -249,16 +249,16 @@ PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
     df_unitdate$DAT_FIN_CYCLE <- as.Date(as.numeric(df_unitdate$DAT_FIN_CYCLE), origin = "1970-01-01")
     df_unitdate$DAT_DEB_CYCLE <- as.Date(as.numeric(df_unitdate$DAT_DEB_CYCLE), origin = "1970-01-01")
     df_unitdate$visnum <- as.numeric(df_unitdate$visnum)
-  } else return("Unité non valide pour l'option unit")
+  } else return("Unit\u00e9 non valide pour l'option unit")
 
 
-  ## Attribuer un (ou plusieurs) cycle à chaque EI de la base df_AE en fonction de la date d'occurence et du patient concerné
-  ## si on fait full_join on aura aussi les individus qui n'ont pas eu l'EI anaemia et présents dans la table df_Tr3
+  ## Attribuer un (ou plusieurs) cycle à chaque EI de la base df_AE en fonction de la date d'occurence et du patient concern\u00e9
+  ## si on fait full_join on aura aussi les individus qui n'ont pas eu l'EI anaemia et pr\u00e9sents dans la table df_Tr3
   ## (comme dans le Alluvial)
   df_unitdate$id_pat <- as.character(df_unitdate$id_pat)
   df_AE4 <- left_join(df_AE3, df_unitdate, by = "id_pat", multiple = "all")
 
-  #on garde les grades pour les lignes où la date de début et de fin de l'EI correspondent au cycle
+  #on garde les grades pour les lignes où la date de d\u00e9but et de fin de l'EI correspondent au cycle
   #sinon on remplace par 0 pour indiquer qu'a ce cycle le patient n'avait pas d'EI (grade 0)
   df_AE4$grade[ ((df_AE4$aedatestart > df_AE4$DAT_FIN_CYCLE) |
                       (df_AE4$aedateend < df_AE4$DAT_DEB_CYCLE))] =0
@@ -274,7 +274,7 @@ PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
   df_AE4$id_pat <- as.factor(df_AE4$id_pat)
   df_AE4$ARM <- as.factor(df_AE4$ARM)
 
-  ## Séparation en deux sous-tables par bras pour en faire 2 graphiques à comparer
+  ## S\u00e9paration en deux sous-tables par bras pour en faire 2 graphiques à comparer
   df_AE4_1_Las <- df_AE4[df_AE4$ARM == "armG",]
   df_AE4_2_Las <- df_AE4[df_AE4$ARM == "armD",]
 
@@ -325,7 +325,7 @@ PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
       # cf : pas de yes dans TTT_IND pour cet individu à chaque cycle
       list_NTTT <- list()
       for (c in 1:max(as.numeric(baseTr$visnum))){
-        #liste des id des patients ayant reçu au moins une fois le traitement donc patients exposés à ce cycle c
+        #liste des id des patients ayant reçu au moins une fois le traitement donc patients expos\u00e9s à ce cycle c
         l_Y <- unique(baseTr$id_pat[baseTr$TTTYN=="Yes" & baseTr$visnum == c])
         l_N <- l_all[!(l_all %in% l_Y)]
         list_NTTT[[c]] <- l_N
@@ -341,7 +341,7 @@ PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
       }
     } else if (unit!="cycle"){
       list_NTTT <- list()
-      #liste des id des patients ayant reçu au moins une fois le traitement donc patients exposés à ce cycle c
+      #liste des id des patients ayant reçu au moins une fois le traitement donc patients expos\u00e9s à ce cycle c
       l_Y <- unique(baseTr$id_pat[baseTr$TTTYN=="Yes"])
       list_NTTT <- l_all[!(l_all %in% l_Y)]
 
@@ -370,7 +370,7 @@ PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
 
 
 
-  #si pas du tout de pat ayant l'EI dans un des deux groupes alors on supprime les lignes ajoutées pour ce groupe
+  #si pas du tout de pat ayant l'EI dans un des deux groupes alors on supprime les lignes ajout\u00e9es pour ce groupe
   if(nrow(df_AE4_1_Las)==0) {
     df_AE5_2_All <- subset(df_AE5, ARM=="armD")
     df_AE5_1_All <- as.data.frame(NULL)
@@ -378,12 +378,12 @@ PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
     df_AE5_1_All <- subset(df_AE5, ARM=="armG")
     df_AE5_2_All <- as.data.frame(NULL)
   } else if(nrow(df_AE4_2_Las)!=0 & nrow(df_AE4_1_Las)!=0){
-    ## Séparation en deux sous-tables par bras pour en faire 2 graphiques à comparer
+    ## S\u00e9paration en deux sous-tables par bras pour en faire 2 graphiques à comparer
     df_AE5_1_All <- df_AE5[df_AE5$ARM == "armG",]
     df_AE5_2_All <- df_AE5[df_AE5$ARM == "armD",]
   }
 
-  ### création de deux variables breaks pour afficher les % au deux graphique
+  ### cr\u00e9ation de deux variables breaks pour afficher les % au deux graphique
   # on cherche pour quelles valeurs de chaque groupe on obtient 0, 25, 50, 75 et 100%
   AlluvialAE <- function(data,N){
     a = 0.25*N
@@ -400,7 +400,7 @@ PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
       geom_stratum() +
       scale_fill_manual(name=paste0("Grade max atteint \npour ",choixEI),
                         breaks = c("0",vect_grade,"NA"),
-                        labels = c("Pas d'EI",vect_grade,"Non traités"),
+                        labels = c("Pas d'EI",vect_grade,"Non trait\u00e9s"),
                         values = c("lightgray",listcol,"grey60")) +
       scale_y_continuous(breaks = c(0,a,b,c,d),
                          labels = c("0"="0","a"="25%","b"="50%","c"="75%","d"="100%")) +
@@ -458,7 +458,7 @@ PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
   }
 
   ### avec p1 et p2 du script Lasagna plot
-  ### et b1 et b2 diagrammes en barres créé agalement dans le script LasagnaPlot (mais avec les tables de ce script)
+  ### et b1 et b2 diagrammes en barres cr\u00e9\u00e9 agalement dans le script LasagnaPlot (mais avec les tables de ce script)
   if(nrow(df_AE4_2_Las)==0){
     if (barplot==TRUE) top_row <- plot_grid(b1,labels = NULL,ncol = 2,rel_widths = c(0.5, 0.5))
     mid_row <- plot_grid(p1,labels = NULL,ncol = 2,rel_widths = c(0.5, 0.5))

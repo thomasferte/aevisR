@@ -51,22 +51,22 @@ ButterflyBarChartSup  <- function(baseEI, baseTr,
   #liste des groupes de traitement de la table baseTr
   list_ARM <- unique(baseTr$ARM)
   if (is.null(ARMe)) {
-    #Liste des id patients dans le bras numéro 1
+    #Liste des id patients dans le bras num\u00e9ro 1
     list_pat1 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[1]])
-    #Liste des id patients dans le bras numéro 2
+    #Liste des id patients dans le bras num\u00e9ro 2
     list_pat2 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[2]])
   } else if (!is.null(ARMe)){
     l2 <- unique(baseTr$ARM)
-    if (!(ARMe %in% l2)) return("Nom de bras de traitement non correct ou non présent dans la base.")
+    if (!(ARMe %in% l2)) return("Nom de bras de traitement non correct ou non pr\u00e9sent dans la base.")
     list_ARM[1] <- ARMe
     list_ARM[2] <- l2[l2 != ARMe]
 
-    #Liste des id patients dans le bras numéro 1
+    #Liste des id patients dans le bras num\u00e9ro 1
     list_pat1 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[1]])
-    #Liste des id patients dans le bras numéro 2
+    #Liste des id patients dans le bras num\u00e9ro 2
     list_pat2 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[2]])
   }
-  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont présents
+  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont pr\u00e9sents
   baseEI$ARM <- ifelse(baseEI$id_pat %in% list_pat1, "armG", "armD")
   baseTr$ARM <- ifelse(baseTr$ARM==list_ARM[1], "armG","armD")
 
@@ -83,7 +83,7 @@ ButterflyBarChartSup  <- function(baseEI, baseTr,
   Events$pctAll <- round(ifelse(Events$ARM=="armG",Events$Count/frq2$Freq[frq2$ARM=="armG"],
                                 Events$Count/frq2$Freq[frq2$ARM=="armD"])*100,1)
 
-  # récupérer la sous base avec les EIs de grade >= 3
+  # r\u00e9cup\u00e9rer la sous base avec les EIs de grade >= 3
   if (varsup!="Serious") {
     df <- baseEI %>% select(id_pat, ARM, SOC, Grade)
     df2 <- df %>% filter(Grade >= varsup)
@@ -225,12 +225,12 @@ ButterflyBarChartSup  <- function(baseEI, baseTr,
   df_plot_forest <- left_join(df_plot_forest, dfx_all %>% select(-frqTot),by="SOC")
   colnames(df_plot_forest)<-c("SOC","estimate1","lower1","upper1","estimate2","lower2","upper2")
 
-  # mettre en évidence par des labels (geom_text) les EIs COD significatifs
+  # mettre en \u00e9vidence par des labels (geom_text) les EIs COD significatifs
   df_plot_forest$test1 <- ""
   df_plot_forest$test1[df_plot_forest$lower1<0 & df_plot_forest$upper1<0]<-"*"
   df_plot_forest$test1[df_plot_forest$lower1>0 & df_plot_forest$upper1>0]<-"*"
 
-  # mettre en évidence par des labels (geom_text) les EIs COD significatifs
+  # mettre en \u00e9vidence par des labels (geom_text) les EIs COD significatifs
   df_plot_forest$test2 <- ""
   df_plot_forest$test2[df_plot_forest$lower2<0 & df_plot_forest$upper2<0]<-"*"
   df_plot_forest$test2[df_plot_forest$lower2>0 & df_plot_forest$upper2>0]<-"*"
@@ -310,7 +310,7 @@ ButterflyBarChartSup  <- function(baseEI, baseTr,
           strip.placement = "none",
           panel.spacing.y = unit(3,"pt"))
 
-  ################### Butterfly barplot superposé
+  ################### Butterfly barplot superpos\u00e9
   p1 <- ggplot() +
     geom_bar(
       data = filter(df_long, grp=="pctS"),

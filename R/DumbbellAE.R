@@ -91,12 +91,12 @@ DumbbellAE <- function(baseEI, baseTr,
 
   #liste des groupes de traitement de la table baseTr
   list_ARM <- unique(baseTr$ARM)
-  #Liste des id patients dans le bras numéro 1
+  #Liste des id patients dans le bras num\u00e9ro 1
   list_pat1 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[1]])
-  #Liste des id patients dans le bras numéro 2
+  #Liste des id patients dans le bras num\u00e9ro 2
   list_pat2 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[2]])
 
-  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont présents
+  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont pr\u00e9sents
   baseEI$ARM <- ifelse(baseEI$id_pat %in% list_pat1, "arm1", "arm2")
   baseTr$ARM <- ifelse(baseTr$ARM==list_ARM[1], "arm1","arm2")
 
@@ -173,7 +173,7 @@ DumbbellAE <- function(baseEI, baseTr,
   }
 
   ################### calcul de RD par PT #####################
-  #Creation d'une table pour accueilir toutes les données nécessaires
+  #Creation d'une table pour accueilir toutes les donn\u00e9es n\u00e9cessaires
   dfx_all <- setNames(data.frame(matrix(ncol = 5, nrow = 0)), c("Freq_Total", "COD","CI_1", "CI_2", "RD"))
 
   for (p in unique(frq4$COD)){
@@ -200,7 +200,7 @@ DumbbellAE <- function(baseEI, baseTr,
   } else return("Valeur non valide pour l'option TriEI")
   dfx_all$rkCOD <- 1:nrow(dfx_all)
 
-  # on ajoute le RD  à la table utilisée pour le p1 pour le rank des SOC
+  # on ajoute le RD  à la table utilis\u00e9e pour le p1 pour le rank des SOC
   df_p1 <- merge(frq4,dfx_all %>% select(COD,rkCOD), by="COD")
   df_p1$pct <- ifelse(df_p1$ARM=="arm1",df_p1$yes/frq2$Freq[frq2$ARM=="arm1"],df_p1$yes/frq2$Freq[frq2$ARM=="arm2"])
 
@@ -247,7 +247,7 @@ DumbbellAE <- function(baseEI, baseTr,
     tab_SOC <- baseEI %>% select(SOC, COD) %>% group_by(SOC,COD) %>% distinct(SOC,COD)
 
     df_p1 <-left_join(df_p1 %>% select(-no),tab_SOC,by="COD",multiple="all")
-    # on ajoute le RD de chaque SOC à la table utilisée pour le p1 pour le rank des SOC
+    # on ajoute le RD de chaque SOC à la table utilis\u00e9e pour le p1 pour le rank des SOC
     df_p1 <- merge(df_p1,dfx_SOC, by="SOC")
     df_p2 <- left_join(dfx_all %>% select(-frqTot),tab_SOC, by="COD", multiple="all")
     df_p3 <- left_join(frq8,tab_SOC, by="COD", multiple="all")
@@ -256,11 +256,11 @@ DumbbellAE <- function(baseEI, baseTr,
     df_p3 <- merge(frq8, df_p1 %>% select(COD, rkCOD), by="COD")
   }
 
-  # mettre en évidence par des labels (geom_text) les EIs COD significatifs
+  # mettre en \u00e9vidence par des labels (geom_text) les EIs COD significatifs
   df_p2$test <- ""
   df_p2$test[(df_p2$CI_2<0 & df_p2$CI_1<0) | (df_p2$CI_2>0 & df_p2$CI_1>0)]<-"*"
 
-  #### variable rang pour ordonner les modalités
+  #### variable rang pour ordonner les modalit\u00e9s
   if (is.null(SOCvar)){
     # names(df_p1) <- c("COD","ARM","yes","no","rk","pct")
     # names(df_p2) <- c("COD","RD","CI_1","CI_2","rk","test")
@@ -276,12 +276,12 @@ DumbbellAE <- function(baseEI, baseTr,
     df_p1 <- merge(df_p1, tb_rank %>% select(-rkCOD, -rkSOC, -SOC), by="COD")
     df_p3 <- merge(df_p3, tb_rank %>% select(-rkCOD, -rkSOC, -SOC), by="COD")
 
-    # création d'une variable bcol (1 si doit être en gris et 0 sinon)
+    # cr\u00e9ation d'une variable bcol (1 si doit être en gris et 0 sinon)
     df_num <- df_p2 %>% arrange(rk) %>% distinct(SOC)
     df_num$num <- 1:nrow(df_num)
 
     df_num <- merge(df_num, df_p1 %>% select(SOC,COD,rk), by="SOC")
-    #A chaque numéro on récupère le min et le max qui seront donc les limites des rectangles pour l'axes des ordonnées (représenté par les COD)
+    #A chaque num\u00e9ro on r\u00e9cupère le min et le max qui seront donc les limites des rectangles pour l'axes des ordonn\u00e9es (repr\u00e9sent\u00e9 par les COD)
     df_rect <- setNames(data.frame(matrix(ncol = 5, nrow = 0)), c("grp", "SOC","COD_start", "COD_end"))
     for(i in unique(df_num$num)){
       dfx_num <- subset(df_num, df_num$num==i)
@@ -298,11 +298,11 @@ DumbbellAE <- function(baseEI, baseTr,
     df_p3 <- merge(df_p3,df_rect, by="SOC")
   }
 
-  #on renomme la colonne ARM avec les noms d'origine (tromqué à 8 caractères)
+  #on renomme la colonne ARM avec les noms d'origine (tromqu\u00e9 à 8 caractères)
   df_p1$ARM <- ifelse( df_p1$ARM=="arm1", substr(list_ARM[1],start=1, stop=8), substr(list_ARM[2],start=1, stop=8))
 
   ## limite pour le graph
-  limpct <- ceiling(max(df_p1$pct)*10) #*10 car on veut prendre à la dizaine supérieure
+  limpct <- ceiling(max(df_p1$pct)*10) #*10 car on veut prendre à la dizaine sup\u00e9rieure
   limpct <- limpct/10
 
   if (limpct < 0.10){
@@ -404,7 +404,7 @@ DumbbellAE <- function(baseEI, baseTr,
             strip.placement = "none",
             panel.spacing.y = unit(3,"pt"))
 
-    #deux col avec les chiffres brutes, ne seront ajoutés que si nbEvents est TRUE
+    #deux col avec les chiffres brutes, ne seront ajout\u00e9s que si nbEvents est TRUE
     if (nbEvents==TRUE){
       p3 <-ggplot(data3,aes(x="",y=reorder(COD,rk))) +
         {if (!is.null(SOCvar)) geom_rect(aes(ymin = COD_start, ymax = COD_end),
@@ -470,8 +470,8 @@ DumbbellAE <- function(baseEI, baseTr,
     ggdraw(plt)
   }
 
-  #### séparation du graph en nbplot car trop de PT_ affichées
-  #On fait des listes de SOC à peu près égales et on diviser les tables et les graphs selon ces deux listes
+  #### s\u00e9paration du graph en nbplot car trop de PT_ affich\u00e9es
+  #On fait des listes de SOC à peu près \u00e9gales et on diviser les tables et les graphs selon ces deux listes
   if (!is.null(SOCvar)) {
     nb_SOC <- length(levels_SOC)
     lim <- floor(nb_SOC/nbplot)

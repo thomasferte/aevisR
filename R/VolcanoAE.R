@@ -56,11 +56,11 @@ VolcanoAE <- function(baseEI, baseTr,
 
   #liste des groupes de traitement de la table baseTr
   list_ARM <- unique(baseTr$ARM)
-  #Liste des id patients dans le bras numéro 1
+  #Liste des id patients dans le bras num\u00e9ro 1
   list_pat1 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[1]])
-  #Liste des id patients dans le bras numéro 2
+  #Liste des id patients dans le bras num\u00e9ro 2
   list_pat2 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[2]])
-  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont présents
+  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont pr\u00e9sents
   baseEI$ARM <- ifelse(baseEI$id_pat %in% list_pat1, "arm1", "arm2")
   baseTr$ARM <- ifelse(baseTr$ARM==list_ARM[1], "arm1","arm2")
 
@@ -93,14 +93,14 @@ VolcanoAE <- function(baseEI, baseTr,
   ########################################
   # Calcul Risk difference et P value
   ########################################
-  #Creation d'une table pour accueilir toutes les données nécessaires
+  #Creation d'une table pour accueilir toutes les donn\u00e9es n\u00e9cessaires
   dfx_all <- setNames(data.frame(matrix(ncol = 4, nrow = 0)), c("Freq_Total", "COD", "pval","RD"))
 
   for (p in unique(frq4$COD)){
     #pour chaque PT tableau permettant de calculer la p-value ainsi que le ratio
     df1 <- subset(frq4, COD == p, select = (c(-COD, -ARM)))
 
-    #Test de fisher sur le tableau précédent
+    #Test de fisher sur le tableau pr\u00e9c\u00e9dent
     stat1 <- fisher.test(df1)
 
     dfx <- data.frame(COD = p,
@@ -108,7 +108,7 @@ VolcanoAE <- function(baseEI, baseTr,
                       frqTot = frq4$yes[frq4$COD == p][1] + frq4$yes[frq4$COD == p][2],
                       RD = RDfunct(df1[[1]][1], df1[[1]][2], frq2$Freq[frq2$ARM=="arm1"], frq2$Freq[frq2$ARM=="arm2"])$estimate,
                       row.names = NULL)
-    # A chaque PT concaténation des tables
+    # A chaque PT concat\u00e9nation des tables
     dfx_all <- rbind(dfx_all,dfx)
   }
 
