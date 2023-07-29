@@ -281,26 +281,7 @@ PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
   if(nrow(df_AE4_1_Las)!=0) df_AE4_1_Las <- ranking_las(df_AE4_1_Las)
   if(nrow(df_AE4_2_Las)!=0) df_AE4_2_Las <- ranking_las(df_AE4_2_Las)
 
-
   ################# Plot ##########################
-  LasagnaAE <- function(data){
-    ggplot(data, aes(x=visnum, y=reorder(id_pat, desc(rank)))) +
-      geom_tile(aes(fill=grade)) +
-      scale_fill_manual(name=paste0("Grade max atteint \npour ",choixEI), breaks = c("0",vect_grade),
-                        labels = c("Pas d'EI",vect_grade),
-                        values = c("lightgray",listcol)) +
-      labs(x = paste0(unit," of treatment"), y = NULL) +
-      theme(axis.text.x = element_text(angle = 0, hjust = 0.5, size =12),
-            axis.title.x = element_blank(),
-            axis.text.y = element_text(color = "black", size=10),
-            axis.ticks = element_blank(),
-            legend.position = "none",
-            panel.background = element_blank(),
-            panel.grid.major.y = element_line(color = "darkgray", linetype = 1),
-            panel.spacing.y = element_blank()) +
-      {if (idpat==FALSE) theme() %+replace% theme(axis.text.y = element_text(color = "white", size=10))}
-  }
-
   if(nrow(df_AE4_1_Las)!=0) p1 <- LasagnaAE(df_AE4_1_Las)
   if(nrow(df_AE4_2_Las)!=0) p2 <- LasagnaAE(df_AE4_2_Las)
 
@@ -385,73 +366,10 @@ PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
 
   ### cr\u00e9ation de deux variables breaks pour afficher les % au deux graphique
   # on cherche pour quelles valeurs de chaque groupe on obtient 0, 25, 50, 75 et 100%
-  AlluvialAE <- function(data,N){
-    a = 0.25*N
-    b = 0.5*N
-    c = 0.75*N
-    d = 1*N
-
-    if ("NA" %in% data$grade) data$grade <- relevel(data$grade, "NA")
-    data <- data %>% select(id_pat, ARM,visnum,grade) %>% arrange(id_pat,visnum,grade)
-
-    ggplot(data,
-           aes(x=visnum, stratum = grade, alluvium = id_pat, fill = grade)) +
-      geom_flow() +
-      geom_stratum() +
-      scale_fill_manual(name=paste0("Grade max atteint \npour ",choixEI),
-                        breaks = c("0",vect_grade,"NA"),
-                        labels = c("Pas d'EI",vect_grade,"Non trait\u00e9s"),
-                        values = c("lightgray",listcol,"grey60")) +
-      scale_y_continuous(breaks = c(0,a,b,c,d),
-                         labels = c("0"="0","a"="25%","b"="50%","c"="75%","d"="100%")) +
-      guides(fill=guide_legend(ncol=max(as.numeric(data$grade))))+
-      labs(x = paste0(unit," of treatement"), y = NULL) +
-      theme(legend.position = "bottom",
-            legend.text = element_text(size=10),
-            legend.title = element_text(size=10),
-            panel.background = element_blank(),
-            panel.grid.major.y = element_line(color = "darkgray", linetype = 2),
-            axis.text.y = element_text(color = 'black', size=12),
-            axis.title.x = element_text(size=12),
-            axis.text.x = element_text(color = 'black', size=12),
-            axis.ticks.x = element_blank())
-  }
   if(nrow(df_AE4_1_Las)!=0) p3 <- AlluvialAE(df_AE5_1_All, frq2$Freq[frq2$ARM=="armG"])
   if(nrow(df_AE4_2_Las)!=0) p4 <- AlluvialAE(df_AE5_2_All, frq2$Freq[frq2$ARM=="armD"])
 
   ################# diagrammes en barres à chaque cycle
-  BarChart <- function(data, group, Type=BPType){
-    df_bar <- data[data$grade!="NA",] %>% select(visnum, grade) %>%
-      group_by(visnum, grade) %>% summarize(count=n()) %>%
-      mutate(pct=round((count/sum(count))*100,0))
-
-    if(Type==21 | Type==22) df_bar <- subset(df_bar, df_bar$grade!=0)
-
-    plot <- ggplot(data = df_bar, aes(fill=grade, x=visnum, y = pct)) +
-      geom_bar(position = "dodge", stat = 'identity') +
-      geom_text(aes(label=pct),
-                size=4,position = position_dodge(width=0.9),vjust = -0.5) +
-      scale_x_discrete(limits=factor(seq(1,max(as.numeric(data$visnum)), by=1))) +
-      scale_y_continuous(limits=c(0,max(df_bar$pct)+10)) +
-      scale_fill_manual(name=paste0("Grade max atteint \npour ",choixEI), breaks = c(vect_grade,"0"),
-                        labels = c(vect_grade,"Pas d'EI"),
-                        values = c(listcol,"lightgray")) +
-      ggtitle(group) +
-      labs(y="percent (%)") +
-      theme(panel.background = element_blank(),
-            plot.title = element_text(size=12),
-            axis.ticks = element_blank(),
-            axis.title.x = element_blank(),
-            axis.title.y = element_text(color = "black", size=12),
-            axis.text.x = element_blank(),
-            legend.position = "none")
-
-    if(Type==12 | Type==22){
-      plot <- plot + theme(axis.text.x = element_text(size=10))
-    } else {
-      plot <- plot + theme(axis.text.x = element_blank())
-    }
-  }
   if (barplot==TRUE){
     if(nrow(df_AE4_1_Las)!=0) b1 <- BarChart(df_AE5_1_All,list_ARM[1])
     if(nrow(df_AE4_2_Las)!=0) b2 <- BarChart(df_AE5_2_All,list_ARM[2])
