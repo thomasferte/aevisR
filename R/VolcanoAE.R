@@ -42,7 +42,33 @@
 #'
 #' @return A Volcano plot
 #' @export
+#' @importFrom ggrepel geom_text_repel
 #'
+#' @examples
+#' library(dplyr)
+#' baseEI <- data.frame(idvar = paste0("Patients", round(runif(n = 100, min = 0, max = 100))),
+#'                      Termsvar = round(runif(n = 100, min = 0, max = 20))) %>%
+#'   dplyr::mutate(SOCvar = round(Termsvar/10)) %>%
+#'   dplyr::mutate(across(everything(), .fns = as.character))
+#'
+#' baseTr  <- baseEI %>%
+#'   dplyr::select(idvar) %>%
+#'   dplyr::distinct() %>%
+#'   dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
+#'                                 size = nrow(.),
+#'                                 replace = TRUE),
+#'                 TTTYN = sample(x = c("Yes", "No"),
+#'                                size = nrow(.),
+#'                                replace = TRUE,
+#'                                prob = c(0.9, 0.1)))
+#'
+#' VolcanoAE(baseEI = baseEI,
+#'           baseTr = baseTr,
+#'           idvar = "idvar",
+#'           Termsvar = "Termsvar",
+#'           TTTYN = "TTTYN",
+#'           ARMvar = "ARMvar")
+
 VolcanoAE <- function(baseEI, baseTr,
                       idvar, Termsvar, TTTYN=NULL, ARMvar,
                       seuillab = 0.01, caption=TRUE, listcol = c("red", "deepskyblue2")){
@@ -152,11 +178,11 @@ Colour saturation help to see if multiple AE are in the same coordinate with red
     scale_y_continuous(name="-log10(p-value)", limits = c(0,limy)) +
     scale_x_continuous(name="Risk difference", breaks = seq(lim1x,lim2x,by=0.05),
                        limits = c(lim1x,lim2x)) +
-    geom_text_repel(size = 4,color="black",min.segment.length = 0.1, force = 5,
-                    max.overlaps = 30,
-                    nudge_y = ifelse(vplot1$RD<0,0.02,-0.02),
-                    nudge_x = ifelse(vplot1$RD<0,0.02,-0.02),
-                    direction="both") +
+    ggrepel::geom_text_repel(size = 4,color="black",min.segment.length = 0.1, force = 5,
+                             max.overlaps = 30,
+                             nudge_y = ifelse(vplot1$RD<0,0.02,-0.02),
+                             nudge_x = ifelse(vplot1$RD<0,0.02,-0.02),
+                             direction="both") +
     labs(shape="Treatment Group", caption=labcap) +
     guides(size = "none") +
     geom_hline(yintercept=-log10(0.05), col="red", linetype=2) +

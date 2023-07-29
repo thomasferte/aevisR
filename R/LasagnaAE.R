@@ -3,11 +3,16 @@
 #' @description helper for PanelLasagnaAlluvialAE
 #'
 #' @param data dataframe
+#' @param unit unit
+#' @param choixEI choixEI
+#' @param vect_grade vect_grade
+#' @param listcol listcol
+#' @param idpat idpat
 #'
 #' @return A plot
 #' @export
 #'
-LasagnaAE <- function(data){
+LasagnaAE <- function(data, unit, choixEI, vect_grade, listcol, idpat){
   ggplot(data, aes(x=visnum, y=reorder(id_pat, desc(rank)))) +
     geom_tile(aes(fill=grade)) +
     scale_fill_manual(name=paste0("Grade max atteint \npour ",choixEI), breaks = c("0",vect_grade),

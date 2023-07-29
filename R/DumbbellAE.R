@@ -75,6 +75,33 @@
 #' @import dplyr
 #' @import ggplot2
 #' @import scales
+#' @import tidyr
+#'
+#' @examples
+#' library(dplyr)
+#' baseEI <- data.frame(idvar = paste0("Patients", round(runif(n = 100, min = 0, max = 100))),
+#'                      Termsvar = round(runif(n = 100, min = 0, max = 20))) %>%
+#'   dplyr::mutate(SOCvar = round(Termsvar/10)) %>%
+#'   dplyr::mutate(across(everything(), .fns = as.character))
+#'
+#' baseTr  <- baseEI %>%
+#'   dplyr::select(idvar) %>%
+#'   dplyr::distinct() %>%
+#'   dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
+#'                                 size = nrow(.),
+#'                                 replace = TRUE),
+#'                 TTTYN = sample(x = c("Yes", "No"),
+#'                                size = nrow(.),
+#'                                replace = TRUE,
+#'                                prob = c(0.9, 0.1)))
+#'
+#' DumbbellAE(baseEI = baseEI,
+#'            baseTr = baseTr,
+#'            idvar = "idvar",
+#'            Termsvar = "Termsvar",
+#'            SOCvar = "SOCvar",
+#'            TTTYN = "TTTYN",
+#'            ARMvar = "ARMvar")
 #'
 DumbbellAE <- function(baseEI, baseTr,
                        idvar, Termsvar, SOCvar=NULL, TTTYN=NULL, ARMvar,
@@ -195,7 +222,7 @@ DumbbellAE <- function(baseEI, baseTr,
   df_AE3 <- baseEI %>% select(id_pat,COD,ARM)
 
   frq8 <- data.frame(xtabs(~ COD + ARM, data = df_AE3))
-  frq8 <- pivot_wider(frq8, names_from = ARM, values_from = Freq)
+  frq8 <- tidyr::pivot_wider(frq8, names_from = ARM, values_from = Freq)
 
   if (!is.null(SOCvar)){
     #On ajoute les SOC correspondants aux COD avec une jointure
@@ -300,7 +327,10 @@ DumbbellAE <- function(baseEI, baseTr,
       df_p2i <- subset(df_p2, SOC %in% l_SOC)
       df_p3i <- subset(df_p3, SOC %in% l_SOC)
 
-      res[[i]] <- DBplot(df_p1i,df_p2i,df_p3i)
+      res[[i]] <- DBplot(df_p1i,df_p2i,df_p3i,
+                         SOCvar = SOCvar, levels_SOC = levels_SOC,
+                         limpct = limpct, listcol = listcol, pas = pas,
+                         nbEvents = nbEvents, caption = caption)
     }
   } else if (is.null(SOCvar)){
     nb_COD <- length(levels_COD)
@@ -321,7 +351,10 @@ DumbbellAE <- function(baseEI, baseTr,
       df_p1i <- subset(df_p1, COD %in% l_COD)
       df_p2i <- subset(df_p2, COD %in% l_COD)
       df_p3i <- subset(df_p3, COD %in% l_COD)
-      res[[i]] <- DBplot(df_p1i,df_p2i,df_p3i)
+      res[[i]] <- DBplot(df_p1i,df_p2i,df_p3i,
+                         SOCvar = SOCvar, levels_SOC = levels_SOC,
+                         limpct = limpct, listcol = listcol, pas = pas,
+                         nbEvents = nbEvents, caption = caption)
     }
   }
 

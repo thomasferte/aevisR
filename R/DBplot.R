@@ -5,11 +5,21 @@
 #' @param data1 a dataframe
 #' @param data2 another
 #' @param data3 another
+#' @param SOCvar The SOC variable
+#' @param levels_SOC The SOC levels
+#' @param limpct The limpct object
+#' @param listcol The color list
+#' @param pas pas
+#' @param nbEvents nbEvents
+#' @param caption caption
 #'
 #' @return A plot
 #' @export
 #'
-DBplot <- function(data1,data2,data3){
+#' @import grid
+#' @import cowplot
+#'
+DBplot <- function(data1,data2,data3, SOCvar, levels_SOC, limpct, listcol, pas, nbEvents, caption){
   if (!is.null(SOCvar)){
     data1$SOC <- factor(data1$SOC, levels = c(levels_SOC))
     data2$SOC <- factor(data2$SOC, levels = c(levels_SOC))
@@ -50,8 +60,8 @@ DBplot <- function(data1,data2,data3){
           panel.spacing.y = unit(3,"pt"))
 
   q <- ggplotGrob(p1)
-  lg <- linesGrob(x=unit(c(1,1),"npc"), y=unit(c(0,1),"npc"),
-                  gp=gpar(col="gray5", lwd=1))
+  lg <- grid::linesGrob(x=unit(c(1,1),"npc"), y=unit(c(0,1),"npc"),
+                        gp=grid::gpar(col="gray5", lwd=1))
   for (k in grep("strip-l",q$layout$name)) {
     q$grobs[[k]]$grobs[[1]]$children[[1]] <- lg
   }
@@ -133,7 +143,7 @@ DBplot <- function(data1,data2,data3){
             axis.ticks.y = element_blank(),
             axis.ticks.x = element_blank())
 
-    plt <- plot_grid(q,  p2, p3 , p4, labels = NULL,nrow = 1,rel_widths = c(0.7, 0.2,0.05,0.05))
+    plt <- cowplot::plot_grid(q,  p2, p3 , p4, labels = NULL,nrow = 1,rel_widths = c(0.7, 0.2,0.05,0.05))
     labcap <- "
       Visual representation of AE data, Dumbbell plot + forest plot for adverse events between two treatment arms.
       The left side of the figure displays the percentage of participants experiencing an adverse event (labelled on the y-axis) in the testing arm with a red circle and control arm with a blue triangle.
@@ -141,7 +151,7 @@ DBplot <- function(data1,data2,data3){
       The left side displays two columns with the absolute number of AE in each groups (multiple episodes are counted).
       SOC are sorted by their RD and inside PT are sorted by their RD, each in increasing order."
   } else {
-    plt <- plot_grid(q,  p2, labels = NULL,nrow = 1,rel_widths = c(0.8, 0.3))
+    plt <- cowplot::plot_grid(q,  p2, labels = NULL,nrow = 1,rel_widths = c(0.8, 0.3))
     labcap <- "
       Visual representation of AE data, Dumbbell plot + forest plot for adverse events between two treatment arms.
       The left side of the figure displays the percentage of participants experiencing an adverse event (labelled on the y-axis) in the testing arm with a red circle and control arm with a blue triangle.
@@ -150,7 +160,7 @@ DBplot <- function(data1,data2,data3){
   }
 
   if (caption==TRUE){
-    plt <- add_sub(plt,labcap,x=0, hjust=0, size=11)
+    plt <- cowplot::add_sub(plt,labcap,x=0, hjust=0, size=11)
   }
-  ggdraw(plt)
+  cowplot::ggdraw(plt)
 }

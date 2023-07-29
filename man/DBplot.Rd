@@ -4,7 +4,18 @@
 \alias{DBplot}
 \title{DBplot}
 \usage{
-DBplot(data1, data2, data3)
+DBplot(
+  data1,
+  data2,
+  data3,
+  SOCvar,
+  levels_SOC,
+  limpct,
+  listcol,
+  pas,
+  nbEvents,
+  caption
+)
 }
 \arguments{
 \item{data1}{a dataframe}
@@ -12,6 +23,20 @@ DBplot(data1, data2, data3)
 \item{data2}{another}
 
 \item{data3}{another}
+
+\item{SOCvar}{The SOC variable}
+
+\item{levels_SOC}{The SOC levels}
+
+\item{limpct}{The limpct object}
+
+\item{listcol}{The color list}
+
+\item{pas}{pas}
+
+\item{nbEvents}{nbEvents}
+
+\item{caption}{caption}
 }
 \value{
 A plot

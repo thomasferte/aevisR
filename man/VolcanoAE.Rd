@@ -69,3 +69,28 @@ ordonnées et pour la saturation des bulles. En abscisse une mesure de
 différence entre les deux groupes soit l’absolute risk difference, le risque
 ratio, odds ratio, ou incidence rate ratio…
 }
+\examples{
+library(dplyr)
+baseEI <- data.frame(idvar = paste0("Patients", round(runif(n = 100, min = 0, max = 100))),
+                     Termsvar = round(runif(n = 100, min = 0, max = 20))) \%>\%
+  dplyr::mutate(SOCvar = round(Termsvar/10)) \%>\%
+  dplyr::mutate(across(everything(), .fns = as.character))
+
+baseTr  <- baseEI \%>\%
+  dplyr::select(idvar) \%>\%
+  dplyr::distinct() \%>\%
+  dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
+                                size = nrow(.),
+                                replace = TRUE),
+                TTTYN = sample(x = c("Yes", "No"),
+                               size = nrow(.),
+                               replace = TRUE,
+                               prob = c(0.9, 0.1)))
+
+VolcanoAE(baseEI = baseEI,
+          baseTr = baseTr,
+          idvar = "idvar",
+          Termsvar = "Termsvar",
+          TTTYN = "TTTYN",
+          ARMvar = "ARMvar")
+}

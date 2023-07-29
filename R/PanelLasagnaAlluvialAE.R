@@ -18,8 +18,6 @@
 #'    et sans manquants
 #'    \item Termsvar : le label des PT ou LLT pour chaque EI : au format
 #'    character obligatoire et sans manquants
-#'    \item SOCvar : le label de la SOC associée à chaque EI : au
-#'    format character et sans manquants.
 #'    \item EIdatestart_var : la date de début de l’EI  : au format Date
 #'    (important) obligatoire
 #'    \item EIdateend_var : la date de fin de l’EI : au format Date (important)
@@ -111,11 +109,55 @@
 #'
 #' @return A lasgna and alluvial plot combined
 #' @export
+#' @import lubridate
 #'
+
+# library(dplyr)
+# baseEI <- data.frame(idvar = paste0("Patients", round(runif(n = 100, min = 0, max = 100))),
+#                      Termsvar = round(runif(n = 100, min = 0, max = 2))) %>%
+#   dplyr::mutate(SOCvar = round(Termsvar/10)) %>%
+#   dplyr::mutate(across(everything(), .fns = as.character)) %>%
+#   mutate(EIdatestart_var = as.Date(runif(n = nrow(.), 1, 200), origin = "2021-01-01"),
+#          EIdateend_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"),
+#          gradevar = round(runif(n = nrow(.), 1, 5)))
+#
+# baseTr  <- baseEI %>%
+#   dplyr::select(idvar) %>%
+#   dplyr::distinct() %>%
+#   dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
+#                                 size = nrow(.),
+#                                 replace = TRUE),
+#                 TTTYN = sample(x = c("Yes", "No"),
+#                                size = nrow(.),
+#                                replace = TRUE,
+#                                prob = c(0.9, 0.1)))
+#
+# baseDates <- baseEI %>%
+#   dplyr::select(idvar) %>%
+#   dplyr::distinct() %>%
+#   mutate(tttdebdate_var = as.Date(runif(n = nrow(.), -100, 0), origin = "2021-01-01"),
+#          tttfindate_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"))
+#
+# PanelLasagnaAlluvialAE(baseEI = baseEI,
+#                        baseTr = baseTr,
+#                        baseDates = baseDates,
+#                        idvar = "idvar",
+#                        Termsvar = "Termsvar",
+#                        EIdatestart_var = "EIdatestart_var",
+#                        EIdateend_var = "EIdateend_var",
+#                        gradevar = "gradevar",
+#                        TTTYN = "TTTYN",
+#                        ARMvar = "ARMvar",
+#                        tttdebdate_var = "tttdebdate_var",
+#                        tttfindate_var = "tttfindate_var",
+#                        choixEI = "2",
+#                        unit = "month")
+
+
 PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
                                    idvar,Termsvar, EIdatestart_var, EIdateend_var, gradevar, TTTYN=NULL,
                                    ARMvar,visitedate_var=NULL,visitnum_var=NULL,tttdebdate_var,tttfindate_var,
-                                   choixEI, ARMe=NULL, unit, barplot=TRUE, BPType=11, suivi=FALSE, listcol , idpat=TRUE){
+                                   choixEI, ARMe=NULL, unit, barplot=TRUE, BPType=11, suivi=FALSE, listcol = NULL, idpat=TRUE){
   #remplacement des noms de variables
   # names(baseEI)[names(baseEI) == id_pat] <- "id_pat"
   baseEI <- baseEI %>% rename("id_pat" = idvar,
@@ -123,6 +165,12 @@ PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
                               "aedatestart" = EIdatestart_var,
                               "aedateend" = EIdateend_var,
                               "grade" = gradevar)
+
+  # set color if not provided
+  if(is.null(listcol)){
+    nb_grade <- length(unique(baseEI$grade))
+    listcol = viridis::viridis(n = nb_grade)
+  }
 
   baseTr <- baseTr %>% rename("id_pat" = idvar,
                               "ARM" = ARMvar)
@@ -171,7 +219,7 @@ PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
   baseEI2 <- merge(baseEI2, baseDates, by="id_pat")
 
   #on v\u00e9rifie que les dates sont bien au format date sinon message d'erreur
-  if (is.Date(baseEI2$tttdebdate) == FALSE | is.Date(baseEI2$tttfindate) == FALSE | is.Date(baseEI2$aedateend) == FALSE | is.Date(baseEI2$aedatestart) == FALSE){
+  if (lubridate::is.Date(baseEI2$tttdebdate) == FALSE | lubridate::is.Date(baseEI2$tttfindate) == FALSE | lubridate::is.Date(baseEI2$aedateend) == FALSE | lubridate::is.Date(baseEI2$aedatestart) == FALSE){
     return("Au moins une des variable date n'est pas au format Date")
   }
 
@@ -282,8 +330,8 @@ PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
   if(nrow(df_AE4_2_Las)!=0) df_AE4_2_Las <- ranking_las(df_AE4_2_Las)
 
   ################# Plot ##########################
-  if(nrow(df_AE4_1_Las)!=0) p1 <- LasagnaAE(df_AE4_1_Las)
-  if(nrow(df_AE4_2_Las)!=0) p2 <- LasagnaAE(df_AE4_2_Las)
+  if(nrow(df_AE4_1_Las)!=0) p1 <- LasagnaAE(data = df_AE4_1_Las, idpat = idpat, unit = unit, choixEI = choixEI, vect_grade = vect_grade, listcol = listcol)
+  if(nrow(df_AE4_2_Las)!=0) p2 <- LasagnaAE(df_AE4_2_Las, idpat = idpat, unit = unit, choixEI = choixEI, vect_grade = vect_grade, listcol = listcol)
 
   ########################### Alluvial #############
   #Comptage du nombre de patient dans chacun des bras
