@@ -1,4 +1,31 @@
-PanelBioAE <- function(baseBio, idvar, biodate_var, unitbio_var,  biolib_var, 
+#' PanelBioAE
+#'
+#' @description Ce graphique représente de façon classique les résultats de biologies d’un patient au cours du temps (plusieurs unités possibles), il se combine bien avec le Patient Span Chart qui représente les EIs au cours du temps pour mettre en regards les biologies relevées et les évènements indésirables.
+#' Pour ce type de graphique il peut y avoir n’importe quel nombre de bras de traitement car on ne représente qu’un patient à la fois pour lequel on indique le bras dans lequel il est.
+#'
+#' @param baseBio la base des biologies avec les résultats des différentes biologies pour chaque patient
+#' \itemize{
+#'    \item l’identifiant du patient (idvar) : au format character obligatoire et sans manquants
+#'    \item la date du relevé biodate_var : au format Date obligatoire et sans manquants
+#'    \item le label de la biologie réalisée biolib_var : au format character obligatoire et sans manquants peuvent être tous identique si une seule biologie dans l’étude
+#'    \item l’unité pour chaque type de biologie unitbi_var : au format character obligatoire et sans manquants
+#'    \item le résultats de biologie biores_var : en numéric obligatoire
+#'    \item [non obligatoire] le label de la visite pendant laquelle a été faite la bio labvisite_var : au format character sans manquants
+#' }
+#' @param idvar column name
+#' @param biodate_var column name
+#' @param unitbio_var column name
+#' @param biolib_var column name
+#' @param labvisite_var column name
+#' @param biores_var column name
+#' @param USU : choix du patient pour lequel on souhaite voir les résultats de biologie –> comme présent dans la base ex : “1002”
+#' @param list_Bio : liste avec les labels de biologies à afficher - ex : c(“ALAT”,“ASAT”) –> par défaut NULL ,pas de bio indiqué alors on les affiche tous
+#' @param suivi : TRUE/FALSE afficher les résultats de bio mesurée après la fin du traitement/début du suivi –> par défaut TRUE
+#'
+#' @return A plot
+#' @export
+#'
+PanelBioAE <- function(baseBio, idvar, biodate_var, unitbio_var,  biolib_var,
                        labvisite_var = NULL, biores_var,
                        USU, list_Bio=NULL, suivi=TRUE){
   #remplacement des noms de variables
@@ -8,10 +35,10 @@ PanelBioAE <- function(baseBio, idvar, biodate_var, unitbio_var,  biolib_var,
                               "lib" = biolib_var,
                               "biores" = biores_var)
   if(!is.null(labvisite_var)) baseBio <- baseBio %>% rename("labvisite"=labvisite_var)
-  
+
   Biopat <- subset(baseBio,baseBio$id_pat==USU)
   Biopat$biodate <- as.Date(Biopat$biodate, format = "%d/%m/%Y")
-  
+
   if (suivi==FALSE & !is.null(labvisite_var)){
     lim <- Biopat$biodate[Biopat$labvisite=="End of treatment"]
     Biopat <- subset(Biopat, biodate<=lim)
@@ -22,9 +49,9 @@ PanelBioAE <- function(baseBio, idvar, biodate_var, unitbio_var,  biolib_var,
   }
   lab_biolib <- c(unique(paste(Biopat$lib[Biopat$unitbio!=""],"\n (",Biopat$unitbio[Biopat$unitbio!=""],")")))
   names(lab_biolib) <- c(unique(Biopat$lib))
-  
+
   if(!is.null(labvisite_var)){
-     ggplot(Biopat %>% select(biodate,biores,lib,labvisite), 
+     ggplot(Biopat %>% select(biodate,biores,lib,labvisite),
          aes(x=biodate,y=biores, label=labvisite)) +
     geom_line(linewidth=2, color="gray40") +
     geom_point(size=4, color="gray20") +
