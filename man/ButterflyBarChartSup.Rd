@@ -69,3 +69,28 @@ On ajoute à droite de ce graphique un double forest plot pour permettre de quan
 Note : ici à l’inverse, mais de la même façon que pour le butterfly empilé nous pourrions créer une version pour multiplier ce graphique par SOC et ainsi avoir autant de graphique que de SOC dans l’étude avec cette fois ci cahque barre représentant un EI de la SOC correspondante.
 Ce type de graphique n’est adapté que pour deux groupes de traitement.
 }
+\examples{
+library(dplyr)
+baseEI <- data.frame(idvar = paste0("Patients", round(runif(n = 100, min = 0, max = 100))),
+                     Termsvar = round(runif(n = 100, min = 0, max = 10))) \%>\%
+  dplyr::mutate(SOCvar = round(Termsvar/10)) \%>\%
+  dplyr::mutate(across(everything(), .fns = as.character)) \%>\%
+  mutate(EIdatestart_var = as.Date(runif(n = nrow(.), 1, 200), origin = "2021-01-01"),
+         EIdateend_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"),
+         gradevar = round(runif(n = nrow(.), 1, 5)))
+
+baseTr  <- baseEI \%>\%
+  dplyr::select(idvar) \%>\%
+  dplyr::distinct() \%>\%
+  dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
+                                size = nrow(.),
+                                replace = TRUE),
+                TTTYN = sample(x = c("Yes", "No"),
+                               size = nrow(.),
+                               replace = TRUE,
+                               prob = c(0.9, 0.1)))
+
+ButterflyBarChartSup(baseEI = baseEI, baseTr = baseTr,
+                     idvar = "idvar", SOCvar = "SOCvar", gradevar = "gradevar")
+
+}

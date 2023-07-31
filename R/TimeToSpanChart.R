@@ -39,6 +39,39 @@
 #' @return A plot
 #' @export
 #'
+#' @examples
+#' library(dplyr)
+#' baseEI <- data.frame(idvar = paste0("Patients", round(runif(n = 100, min = 0, max = 100))),
+#'                      Termsvar = round(runif(n = 100, min = 0, max = 2))) %>%
+#'   dplyr::mutate(SOCvar = round(Termsvar/10)) %>%
+#'   dplyr::mutate(across(everything(), .fns = as.character)) %>%
+#'   mutate(EIdatestart_var = as.Date(runif(n = nrow(.), 1, 200), origin = "2021-01-01"),
+#'          EIdateend_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"),
+#'          gradevar = round(runif(n = nrow(.), 1, 5)))
+#'
+#' baseTr  <- baseEI %>%
+#'   dplyr::select(idvar) %>%
+#'   dplyr::distinct() %>%
+#'   dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
+#'                                 size = nrow(.),
+#'                                 replace = TRUE),
+#'                 TTTYN = sample(x = c("Yes", "No"),
+#'                                size = nrow(.),
+#'                                replace = TRUE,
+#'                                prob = c(0.9, 0.1)))
+#'
+#' baseDates <- baseEI %>%
+#'   dplyr::select(idvar) %>%
+#'   dplyr::distinct() %>%
+#'   mutate(tttdebdate_var = as.Date(runif(n = nrow(.), -100, 0), origin = "2021-01-01"),
+#'          tttfindate_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"))
+#'
+#' TimeToSpanChart(baseEI = baseEI, baseTr = baseTr, baseDates = baseDates,
+#'                 idvar = "idvar", Termsvar = "Termsvar",
+#'                 EIdatestart_var = "EIdatestart_var", EIdateend_var = "EIdateend_var",
+#'                 gradevar = "gradevar", ARMvar = "ARMvar",
+#'                 tttdebdate_var = "tttdebdate_var", tttfindate_var = "tttfindate_var")
+#'
 TimeToSpanChart <- function(baseEI, baseTr, baseDates,
                             idvar, Termsvar, EIdatestart_var, EIdateend_var, gradevar, TTTYN = NULL, ARMvar, tttdebdate_var, tttfindate_var,
                             listEI=NULL, unit = "weeks", caption=TRUE, listcol=c("deepskyblue2","red")){
@@ -197,7 +230,7 @@ TimeToSpanChart <- function(baseEI, baseTr, baseDates,
   df_plot$end <- df_plot$med_onset + df_plot$med_duration
 
   ##### autre version de la table pour le graph
-  df_long <- df_plot %>% gather(type, time, -c(COD, ARM, med_duration, med_G345, med_G45))
+  df_long <- df_plot %>% tidyr::gather(type, time, -c(COD, ARM, med_duration, med_G345, med_G45))
   l_COD <- c("Treatment",tb_freq$COD[c(1:20)])
 
   ####

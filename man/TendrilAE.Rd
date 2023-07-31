@@ -60,3 +60,35 @@ A plot
 \description{
 Permet de montrer à la fois l’importance relative des risques et le pattern temporel des EIs durant l’étude. Visualisation qui résume le profil global des EIs d’une étude, montre les EIs d’importance majeure et illustre l’évolution temporelle des EIs reportés. Montre TOUS les EIs, même les récurrents (occurrence multiple pour chaque patient), et pas seulement la première occurrence comme c’est le cas pour d’autres graphiques.
 }
+\examples{
+library(dplyr)
+baseEI <- data.frame(idvar = paste0("Patients", round(runif(n = 100, min = 0, max = 100))),
+                     Termsvar = round(runif(n = 100, min = 0, max = 2))) \%>\%
+  dplyr::mutate(SOCvar = round(Termsvar/10)) \%>\%
+  dplyr::mutate(across(everything(), .fns = as.character)) \%>\%
+  mutate(EIdatestart_var = as.Date(runif(n = nrow(.), 1, 200), origin = "2021-01-01"),
+         EIdateend_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"),
+         gradevar = round(runif(n = nrow(.), 1, 5)))
+
+baseTr  <- baseEI \%>\%
+  dplyr::select(idvar) \%>\%
+  dplyr::distinct() \%>\%
+  dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
+                                size = nrow(.),
+                                replace = TRUE),
+                TTTYN = sample(x = c("Yes", "No"),
+                               size = nrow(.),
+                               replace = TRUE,
+                               prob = c(0.9, 0.1)))
+
+baseDates <- baseEI \%>\%
+  dplyr::select(idvar) \%>\%
+  dplyr::distinct() \%>\%
+  mutate(tttdebdate_var = as.Date(runif(n = nrow(.), -100, 0), origin = "2021-01-01"),
+         tttfindate_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"))
+
+TendrilAE(baseEI = baseEI, baseTr = baseTr, baseDates = baseDates,
+          idvar = "idvar", Termsvar = "Termsvar", EIdatestart_var = "EIdatestart_var",
+          ARMvar = "ARMvar", tttdebdate_var = "tttdebdate_var")
+
+}

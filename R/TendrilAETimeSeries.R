@@ -32,6 +32,37 @@
 #' @return A plot
 #' @export
 #'
+#' @examples
+#' library(dplyr)
+#' baseEI <- data.frame(idvar = paste0("Patients", round(runif(n = 100, min = 0, max = 100))),
+#'                      Termsvar = round(runif(n = 100, min = 0, max = 2))) %>%
+#'   dplyr::mutate(SOCvar = round(Termsvar/10)) %>%
+#'   dplyr::mutate(across(everything(), .fns = as.character)) %>%
+#'   mutate(EIdatestart_var = as.Date(runif(n = nrow(.), 1, 200), origin = "2021-01-01"),
+#'          EIdateend_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"),
+#'          gradevar = round(runif(n = nrow(.), 1, 5)))
+#'
+#' baseTr  <- baseEI %>%
+#'   dplyr::select(idvar) %>%
+#'   dplyr::distinct() %>%
+#'   dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
+#'                                 size = nrow(.),
+#'                                 replace = TRUE),
+#'                 TTTYN = sample(x = c("Yes", "No"),
+#'                                size = nrow(.),
+#'                                replace = TRUE,
+#'                                prob = c(0.9, 0.1)))
+#'
+#' baseDates <- baseEI %>%
+#'   dplyr::select(idvar) %>%
+#'   dplyr::distinct() %>%
+#'   mutate(tttdebdate_var = as.Date(runif(n = nrow(.), -100, 0), origin = "2021-01-01"),
+#'          tttfindate_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"))
+#'
+#' TendrilAETimeSeries(baseEI = baseEI, baseTr = baseTr, baseDates = baseDates,
+#'                     idvar = "idvar", Termsvar = "Termsvar", EIdatestart_var = "EIdatestart_var",
+#'                     ARMvar = "ARMvar", tttdebdate_var = "tttdebdate_var")
+#'
 TendrilAETimeSeries <- function(baseEI,baseTr, baseDates,
                                 idvar, Termsvar, EIdatestart_var, ARMvar, tttdebdate_var,
                                 CODlist=NULL, listcol = NULL){
@@ -79,21 +110,21 @@ TendrilAETimeSeries <- function(baseEI,baseTr, baseDates,
   SubjList <- baseEI %>% arrange(id_pat,ARM)
   SubjList$ARM <- ifelse(SubjList$ARM=="arm1",as.character(list_ARM[1]),as.character(list_ARM[2]))
 
-  data.Tendril <- Tendril(mydata = baseEI2,
-                          rotations = 4, #set the degree to which each event pulls a tendril in a direction
-                          AEfreqThreshold = 5, #Change the number of occurrences required to be plotted
-                          Tag = "COD",
-                          Treatments = c(as.character(list_ARM[1]),as.character(list_ARM[2])),
-                          Unique.Subject.Identifier = "id_pat",
-                          Terms = "COD",
-                          Treat = "ARM",
-                          StartDay = "Days",
-                          SubjList = SubjList,
-                          SubjList.subject = "id_pat",
-                          SubjList.treatment = "ARM")
+  data.Tendril <- Tendril::Tendril(mydata = baseEI2,
+                                   rotations = 4, #set the degree to which each event pulls a tendril in a direction
+                                   AEfreqThreshold = 5, #Change the number of occurrences required to be plotted
+                                   Tag = "COD",
+                                   Treatments = c(as.character(list_ARM[1]),as.character(list_ARM[2])),
+                                   Unique.Subject.Identifier = "id_pat",
+                                   Terms = "COD",
+                                   Treat = "ARM",
+                                   StartDay = "Days",
+                                   SubjList = SubjList,
+                                   SubjList.subject = "id_pat",
+                                   SubjList.treatment = "ARM")
 
   #table de donn\u00e9es pour le TimeSeries
-  t <- plot_timeseries(data.Tendril)
+  t <- Tendril::plot_timeseries(data.Tendril)
 
   if (!is.null(CODlist)){
     p2 <- ggplot(t$data,aes(x=StartDay, y=Net, group=Terms)) +
@@ -123,11 +154,11 @@ TendrilAETimeSeries <- function(baseEI,baseTr, baseDates,
       geom_point(size=2) +
       geom_hline(yintercept = 0, col="red",linetype=2, linewidth=1) +
       labs(x="Day since start of treatment", y=paste0("Net event - ",list_ARM[1]," over ",list_ARM[2])) +
-      geom_label_repel(data=anno, aes(x=StartDay, y=Net, label=Terms),
-                       color="black",
-                       min.segment.length = 0.1, force = 8,
-                       max.overlaps = 30,
-                       direction = "x") +
+      ggrepel::geom_label_repel(data=anno, aes(x=StartDay, y=Net, label=Terms),
+                                color="black",
+                                min.segment.length = 0.1, force = 8,
+                                max.overlaps = 30,
+                                direction = "x") +
       theme(axis.text = element_text(size=12), #taille des labels des axes
             axis.title = element_text(size = 12), #taille des titres des axes
             panel.background = element_blank(), #pas d'arrière plan

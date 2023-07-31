@@ -48,6 +48,49 @@
 #' @return A plot
 #' @export
 #'
+#' @examples
+#' library(dplyr)
+#' baseEI <- data.frame(idvar = paste0("Patients", round(runif(n = 100, min = 0, max = 100))),
+#'                      Termsvar = round(runif(n = 100, min = 0, max = 2))) %>%
+#'   dplyr::mutate(SOCvar = round(Termsvar/10)) %>%
+#'   dplyr::mutate(across(everything(), .fns = as.character)) %>%
+#'   mutate(EIdatestart_var = as.Date(runif(n = nrow(.), 1, 200), origin = "2021-01-01"),
+#'          EIdateend_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"),
+#'          gradevar = round(runif(n = nrow(.), 1, 5)))
+#'
+#' baseTr  <- baseEI %>%
+#'   dplyr::select(idvar) %>%
+#'   dplyr::distinct() %>%
+#'   dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
+#'                                 size = nrow(.),
+#'                                 replace = TRUE),
+#'                 TTTYN = sample(x = c("Yes", "No"),
+#'                                size = nrow(.),
+#'                                replace = TRUE,
+#'                                prob = c(0.9, 0.1)))
+#'
+#' baseDates <- baseEI %>%
+#'   dplyr::select(idvar) %>%
+#'   dplyr::distinct() %>%
+#'   mutate(tttdebdate_var = as.Date(runif(n = nrow(.), -100, 0), origin = "2021-01-01"),
+#'          tttfindate_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"))
+#'
+#' LineErrorBars(
+#'   baseEI = baseEI,
+#'   baseTr = baseTr,
+#'   baseDates = baseDates,
+#'   idvar = "idvar",
+#'   Termsvar = "Termsvar",
+#'   EIdatestart_var = "EIdatestart_var",
+#'   EIdateend_var = "EIdateend_var",
+#'   ARMvar = "ARMvar",
+#'   tttdebdate_var = "tttdebdate_var",
+#'   tttfindate_var = "tttfindate_var",
+#'   choixEI = 1,
+#'   unit = "month",
+#'   listcol = viridis::viridis(n = 5)
+#' )
+#'
 LineErrorBars <- function(baseEI,baseTr,baseDates,
                           idvar, Termsvar, gradevar, EIdatestart_var, EIdateend_var,
                           TTTYN = NULL, ARMvar, tttdebdate_var, tttfindate_var,
@@ -186,7 +229,7 @@ LineErrorBars <- function(baseEI,baseTr,baseDates,
   # fr\u00e9quence par PT et par cycle
   frq1 <- df_AE4 %>% select(id_pat,ARM,COD, visnum) %>% distinct(id_pat, ARM, COD, visnum) #liste des EIs distincts pour chaque patient en pr\u00e9cisant son bras de traitement
   frq1 <- data.frame(xtabs(~ COD + ARM + visnum, data = frq1)) #frequence de chaque type d'EI dans chacun des bras de traitement
-  frq1 <- frq1 %>% pivot_wider(names_from = ARM, values_from = Freq)
+  frq1 <- frq1 %>% tidyr::pivot_wider(names_from = ARM, values_from = Freq)
 
 
   #######################################################
@@ -200,10 +243,10 @@ LineErrorBars <- function(baseEI,baseTr,baseDates,
   df_AE5 <- df_AE5 %>% select(-Grade) %>% distinct(id_pat,ARM,COD, visnum)
   # fr\u00e9quence par PT et par cycle pour les EIs de grade <=x
   frq2 <- data.frame(xtabs(~ COD + ARM + visnum, data=df_AE5))
-  frq2 <- frq2 %>% pivot_wider(names_from = ARM, values_from = Freq)
+  frq2 <- frq2 %>% tidyr::pivot_wider(names_from = ARM, values_from = Freq)
 
   #### on merge les deux tables cr\u00e9\u00e9es frq1 et frq2 pour pouvoir calculer le RD
-  frq <- left_join(frq1, frq2, by=c("COD","visnum")) %>% mutate(across(where(is.numeric),~replace_na(.x,0)))
+  frq <- left_join(frq1, frq2, by=c("COD","visnum")) %>% mutate(across(where(is.numeric),~tidyr::replace_na(.x,0)))
   names(frq) <- c("COD","visnum","G1tot","G2tot","G1grd","G2grd")
 
   #### calcul du RD

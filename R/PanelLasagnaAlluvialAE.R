@@ -111,49 +111,47 @@
 #' @export
 #' @import lubridate
 #'
-
-# library(dplyr)
-# baseEI <- data.frame(idvar = paste0("Patients", round(runif(n = 100, min = 0, max = 100))),
-#                      Termsvar = round(runif(n = 100, min = 0, max = 2))) %>%
-#   dplyr::mutate(SOCvar = round(Termsvar/10)) %>%
-#   dplyr::mutate(across(everything(), .fns = as.character)) %>%
-#   mutate(EIdatestart_var = as.Date(runif(n = nrow(.), 1, 200), origin = "2021-01-01"),
-#          EIdateend_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"),
-#          gradevar = round(runif(n = nrow(.), 1, 5)))
-#
-# baseTr  <- baseEI %>%
-#   dplyr::select(idvar) %>%
-#   dplyr::distinct() %>%
-#   dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
-#                                 size = nrow(.),
-#                                 replace = TRUE),
-#                 TTTYN = sample(x = c("Yes", "No"),
-#                                size = nrow(.),
-#                                replace = TRUE,
-#                                prob = c(0.9, 0.1)))
-#
-# baseDates <- baseEI %>%
-#   dplyr::select(idvar) %>%
-#   dplyr::distinct() %>%
-#   mutate(tttdebdate_var = as.Date(runif(n = nrow(.), -100, 0), origin = "2021-01-01"),
-#          tttfindate_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"))
-#
-# PanelLasagnaAlluvialAE(baseEI = baseEI,
-#                        baseTr = baseTr,
-#                        baseDates = baseDates,
-#                        idvar = "idvar",
-#                        Termsvar = "Termsvar",
-#                        EIdatestart_var = "EIdatestart_var",
-#                        EIdateend_var = "EIdateend_var",
-#                        gradevar = "gradevar",
-#                        TTTYN = "TTTYN",
-#                        ARMvar = "ARMvar",
-#                        tttdebdate_var = "tttdebdate_var",
-#                        tttfindate_var = "tttfindate_var",
-#                        choixEI = "2",
-#                        unit = "month")
-
-
+#' @examples
+#' library(dplyr)
+#' baseEI <- data.frame(idvar = paste0("Patients", round(runif(n = 100, min = 0, max = 100))),
+#'                      Termsvar = round(runif(n = 100, min = 0, max = 2))) %>%
+#'   dplyr::mutate(SOCvar = round(Termsvar/10)) %>%
+#'   dplyr::mutate(across(everything(), .fns = as.character)) %>%
+#'   mutate(EIdatestart_var = as.Date(runif(n = nrow(.), 1, 200), origin = "2021-01-01"),
+#'          EIdateend_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"),
+#'          gradevar = round(runif(n = nrow(.), 1, 5)))
+#'
+#' baseTr  <- baseEI %>%
+#'   dplyr::select(idvar) %>%
+#'   dplyr::distinct() %>%
+#'   dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
+#'                                 size = nrow(.),
+#'                                 replace = TRUE),
+#'                 TTTYN = sample(x = c("Yes", "No"),
+#'                                size = nrow(.),
+#'                                replace = TRUE,
+#'                                prob = c(0.9, 0.1)))
+#'
+#' baseDates <- baseEI %>%
+#'   dplyr::select(idvar) %>%
+#'   dplyr::distinct() %>%
+#'   mutate(tttdebdate_var = as.Date(runif(n = nrow(.), -100, 0), origin = "2021-01-01"),
+#'          tttfindate_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"))
+#'
+#' PanelLasagnaAlluvialAE(baseEI = baseEI,
+#'                        baseTr = baseTr,
+#'                        baseDates = baseDates,
+#'                        idvar = "idvar",
+#'                        Termsvar = "Termsvar",
+#'                        EIdatestart_var = "EIdatestart_var",
+#'                        EIdateend_var = "EIdateend_var",
+#'                        gradevar = "gradevar",
+#'                        ARMvar = "ARMvar",
+#'                        tttdebdate_var = "tttdebdate_var",
+#'                        tttfindate_var = "tttfindate_var",
+#'                        choixEI = "2",
+#'                        unit = "year")
+#'
 PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
                                    idvar,Termsvar, EIdatestart_var, EIdateend_var, gradevar, TTTYN=NULL,
                                    ARMvar,visitedate_var=NULL,visitnum_var=NULL,tttdebdate_var,tttfindate_var,
@@ -304,7 +302,7 @@ PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
   ## si on fait full_join on aura aussi les individus qui n'ont pas eu l'EI anaemia et pr\u00e9sents dans la table df_Tr3
   ## (comme dans le Alluvial)
   df_unitdate$id_pat <- as.character(df_unitdate$id_pat)
-  df_AE4 <- left_join(df_AE3, df_unitdate, by = "id_pat", multiple = "all")
+  df_AE4 <- left_join(df_AE3, df_unitdate, by = "id_pat", relationship = "many-to-many")
 
   #on garde les grades pour les lignes où la date de d\u00e9but et de fin de l'EI correspondent au cycle
   #sinon on remplace par 0 pour indiquer qu'a ce cycle le patient n'avait pas d'EI (grade 0)
@@ -414,13 +412,21 @@ PanelLasagnaAlluvialAE <- function(baseEI, baseTr, baseDates,
 
   ### cr\u00e9ation de deux variables breaks pour afficher les % au deux graphique
   # on cherche pour quelles valeurs de chaque groupe on obtient 0, 25, 50, 75 et 100%
-  if(nrow(df_AE4_1_Las)!=0) p3 <- AlluvialAE(df_AE5_1_All, frq2$Freq[frq2$ARM=="armG"])
-  if(nrow(df_AE4_2_Las)!=0) p4 <- AlluvialAE(df_AE5_2_All, frq2$Freq[frq2$ARM=="armD"])
+  print("Alluvial")
+  if(nrow(df_AE4_1_Las)!=0) p3 <- AlluvialAE(data = df_AE5_1_All, N = frq2$Freq[frq2$ARM=="armG"],
+                                             choixEI = choixEI, vect_grade = vect_grade, listcol = listcol, unit = unit)
+  if(nrow(df_AE4_2_Las)!=0) p4 <- AlluvialAE(df_AE5_2_All, frq2$Freq[frq2$ARM=="armD"],
+                                             choixEI = choixEI, vect_grade = vect_grade, listcol = listcol, unit = unit)
 
   ################# diagrammes en barres à chaque cycle
+  print("barplot")
   if (barplot==TRUE){
-    if(nrow(df_AE4_1_Las)!=0) b1 <- BarChart(df_AE5_1_All,list_ARM[1])
-    if(nrow(df_AE4_2_Las)!=0) b2 <- BarChart(df_AE5_2_All,list_ARM[2])
+    if(nrow(df_AE4_1_Las)!=0) b1 <- BarChart(df_AE5_1_All,list_ARM[1],
+                                             Type = BPType,
+                                             choixEI = choixEI, vect_grade = vect_grade, listcol = listcol)
+    if(nrow(df_AE4_2_Las)!=0) b2 <- BarChart(df_AE5_2_All,list_ARM[2],
+                                             Type = BPType,
+                                             choixEI = choixEI, vect_grade = vect_grade, listcol = listcol)
   }
 
   ### avec p1 et p2 du script Lasagna plot

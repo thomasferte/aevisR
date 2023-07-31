@@ -4,7 +4,7 @@
 \alias{BarChart}
 \title{BarChart}
 \usage{
-BarChart(data, group, Type = BPType)
+BarChart(data, group, Type, choixEI, vect_grade, listcol)
 }
 \arguments{
 \item{data}{A dataframe}
@@ -12,6 +12,12 @@ BarChart(data, group, Type = BPType)
 \item{group}{A groupe}
 
 \item{Type}{A type}
+
+\item{choixEI}{choixEI}
+
+\item{vect_grade}{vect_grade}
+
+\item{listcol}{listcol}
 }
 \value{
 A plot

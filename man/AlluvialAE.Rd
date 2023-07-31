@@ -4,12 +4,20 @@
 \alias{AlluvialAE}
 \title{AlluvialAE}
 \usage{
-AlluvialAE(data, N)
+AlluvialAE(data, N, choixEI, vect_grade, listcol, unit)
 }
 \arguments{
 \item{data}{dataframe}
 
 \item{N}{N}
+
+\item{choixEI}{choixEI}
+
+\item{vect_grade}{vect_grade}
+
+\item{listcol}{listcol}
+
+\item{unit}{unit}
 }
 \value{
 A plot

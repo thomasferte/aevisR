@@ -77,6 +77,33 @@
 #' @return A Butterfly stacked barplot par SOC
 #' @export
 #'
+#' @importFrom rlist list.reverse
+#'
+#' @examples
+#' library(dplyr)
+#' baseEI <- data.frame(idvar = paste0("Patients", round(runif(n = 100, min = 0, max = 100))),
+#'                      Termsvar = round(runif(n = 100, min = 0, max = 2))) %>%
+#'   dplyr::mutate(SOCvar = round(Termsvar/10)) %>%
+#'   dplyr::mutate(across(everything(), .fns = as.character)) %>%
+#'   mutate(EIdatestart_var = as.Date(runif(n = nrow(.), 1, 200), origin = "2021-01-01"),
+#'          EIdateend_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"),
+#'          gradevar = round(runif(n = nrow(.), 1, 5)))
+#'
+#' baseTr  <- baseEI %>%
+#'   dplyr::select(idvar) %>%
+#'   dplyr::distinct() %>%
+#'   dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
+#'                                 size = nrow(.),
+#'                                 replace = TRUE),
+#'                 TTTYN = sample(x = c("Yes", "No"),
+#'                                size = nrow(.),
+#'                                replace = TRUE,
+#'                                prob = c(0.9, 0.1)))
+#'
+#' ButterflyStackAE(baseEI = baseEI, baseTr = baseTr,
+#'                  idvar = "idvar", SOCvar = "SOCvar", gradevar = "gradevar", SOCchoix = "0",
+#'                  listcol = viridis::viridis(n = 5))
+#'
 ButterflyStackAE <- function(baseEI, baseTr,
                              idvar, Termsvar, SOCvar, gradevar, TTTYN=NULL,ARMvar,
                              SOCchoix, ARMe=NULL, listcol, gsup=TRUE, grprk=NULL, rk="pctgrade", order="Desc"){
@@ -306,7 +333,7 @@ ButterflyStackAE <- function(baseEI, baseTr,
       {if(order=="Inc") geom_bar(position = position_stack(reverse = TRUE), stat = "identity")} +
       scale_x_continuous(name = "Percent of EI", limits=c(0,101)) +
       {if(order=="Desc") scale_fill_manual(name="Grade max atteint", breaks = sort(vect_grade, decreasing = TRUE),
-                                           values = list.reverse(listcol))} +
+                                           values = rlist::list.reverse(listcol))} +
       {if(order=="Inc") scale_fill_manual(name="Grade max atteint", breaks = sort(vect_grade, decreasing = FALSE),
                                           values = listcol)} +
       geom_text(aes(label=paste0(pct,"%"), x=label_x),
@@ -327,10 +354,10 @@ ButterflyStackAE <- function(baseEI, baseTr,
             legend.title = element_text(size=10),
             strip.text.y.left = element_text(angle=0, size=12))
 
-    bottom_row <- plot_grid(p1,  p2, labels = NULL,nrow = 1,rel_widths = c(lgG, lgD))
-    p<-plot_grid(p3, bottom_row, labels = NULL,nrow = 3,rel_heights = c(0.2,ht1,ht2))
+    bottom_row <- cowplot::plot_grid(p1,  p2, labels = NULL,nrow = 1,rel_widths = c(lgG, lgD))
+    p<-cowplot::plot_grid(p3, bottom_row, labels = NULL,nrow = 3,rel_heights = c(0.2,ht1,ht2))
   } else {
-    p<-plot_grid(p1,  p2, labels = NULL,nrow = 1,rel_widths = c(lgG, lgD))
+    p<-cowplot::plot_grid(p1,  p2, labels = NULL,nrow = 1,rel_widths = c(lgG, lgD))
   }
   suppressWarnings(print(p))
 }

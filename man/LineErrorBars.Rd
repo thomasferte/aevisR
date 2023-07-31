@@ -96,3 +96,47 @@ Ce graphique peut être combiné avec le panel Lasagna/Alluvial pour comparer av
 Il est composé d’une barre d’erreur avec le RD et son IC à 95% pour chaque période (choix entre cycle, semaine, mois…) et permet par exemple de voir si la proportion de patient ayant eu une Anémie de grade >= 3 (parmis ceux ayant eu une Anémie) est significativement plus élevée dans un groupe de traitement ou non.
 Ce graphique n’est adapté que pour deux groupes de traitements.
 }
+\examples{
+library(dplyr)
+baseEI <- data.frame(idvar = paste0("Patients", round(runif(n = 100, min = 0, max = 100))),
+                     Termsvar = round(runif(n = 100, min = 0, max = 2))) \%>\%
+  dplyr::mutate(SOCvar = round(Termsvar/10)) \%>\%
+  dplyr::mutate(across(everything(), .fns = as.character)) \%>\%
+  mutate(EIdatestart_var = as.Date(runif(n = nrow(.), 1, 200), origin = "2021-01-01"),
+         EIdateend_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"),
+         gradevar = round(runif(n = nrow(.), 1, 5)))
+
+baseTr  <- baseEI \%>\%
+  dplyr::select(idvar) \%>\%
+  dplyr::distinct() \%>\%
+  dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
+                                size = nrow(.),
+                                replace = TRUE),
+                TTTYN = sample(x = c("Yes", "No"),
+                               size = nrow(.),
+                               replace = TRUE,
+                               prob = c(0.9, 0.1)))
+
+baseDates <- baseEI \%>\%
+  dplyr::select(idvar) \%>\%
+  dplyr::distinct() \%>\%
+  mutate(tttdebdate_var = as.Date(runif(n = nrow(.), -100, 0), origin = "2021-01-01"),
+         tttfindate_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"))
+
+LineErrorBars(
+  baseEI = baseEI,
+  baseTr = baseTr,
+  baseDates = baseDates,
+  idvar = "idvar",
+  Termsvar = "Termsvar",
+  EIdatestart_var = "EIdatestart_var",
+  EIdateend_var = "EIdateend_var",
+  ARMvar = "ARMvar",
+  tttdebdate_var = "tttdebdate_var",
+  tttfindate_var = "tttfindate_var",
+  choixEI = 1,
+  unit = "month",
+  listcol = viridis::viridis(n = 5)
+)
+
+}

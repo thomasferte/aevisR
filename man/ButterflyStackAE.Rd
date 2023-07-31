@@ -115,3 +115,29 @@ Variables : EIs en ligne, proportion de patients en abscisse, variable quali
 pour diviser les barres (ici le grade grade ou plutôt le grademax),
 opposition par le centre des deux bras de traitement
 }
+\examples{
+library(dplyr)
+baseEI <- data.frame(idvar = paste0("Patients", round(runif(n = 100, min = 0, max = 100))),
+                     Termsvar = round(runif(n = 100, min = 0, max = 2))) \%>\%
+  dplyr::mutate(SOCvar = round(Termsvar/10)) \%>\%
+  dplyr::mutate(across(everything(), .fns = as.character)) \%>\%
+  mutate(EIdatestart_var = as.Date(runif(n = nrow(.), 1, 200), origin = "2021-01-01"),
+         EIdateend_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"),
+         gradevar = round(runif(n = nrow(.), 1, 5)))
+
+baseTr  <- baseEI \%>\%
+  dplyr::select(idvar) \%>\%
+  dplyr::distinct() \%>\%
+  dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
+                                size = nrow(.),
+                                replace = TRUE),
+                TTTYN = sample(x = c("Yes", "No"),
+                               size = nrow(.),
+                               replace = TRUE,
+                               prob = c(0.9, 0.1)))
+
+ButterflyStackAE(baseEI = baseEI, baseTr = baseTr,
+                 idvar = "idvar", SOCvar = "SOCvar", gradevar = "gradevar", SOCchoix = "0",
+                 listcol = viridis::viridis(n = 5))
+
+}

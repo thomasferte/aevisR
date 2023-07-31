@@ -25,7 +25,7 @@ PanelLasagnaAlluvialAE(
   barplot = TRUE,
   BPType = 11,
   suivi = FALSE,
-  listcol,
+  listcol = NULL,
   idpat = TRUE
 )
 }
@@ -36,8 +36,6 @@ PanelLasagnaAlluvialAE(
    et sans manquants
    \item Termsvar : le label des PT ou LLT pour chaque EI : au format
    character obligatoire et sans manquants
-   \item SOCvar : le label de la SOC associée à chaque EI : au
-   format character et sans manquants.
    \item EIdatestart_var : la date de début de l’EI  : au format Date
    (important) obligatoire
    \item EIdateend_var : la date de fin de l’EI : au format Date (important)
@@ -162,4 +160,46 @@ Combinaison de plusieurs graphiques :
    son grade pour se placer avec les autres individus du même grade afin de
    pouvoir observer une proportion pour chaque grade et à chaque cycle.
 }
+}
+\examples{
+library(dplyr)
+baseEI <- data.frame(idvar = paste0("Patients", round(runif(n = 100, min = 0, max = 100))),
+                     Termsvar = round(runif(n = 100, min = 0, max = 2))) \%>\%
+  dplyr::mutate(SOCvar = round(Termsvar/10)) \%>\%
+  dplyr::mutate(across(everything(), .fns = as.character)) \%>\%
+  mutate(EIdatestart_var = as.Date(runif(n = nrow(.), 1, 200), origin = "2021-01-01"),
+         EIdateend_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"),
+         gradevar = round(runif(n = nrow(.), 1, 5)))
+
+baseTr  <- baseEI \%>\%
+  dplyr::select(idvar) \%>\%
+  dplyr::distinct() \%>\%
+  dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
+                                size = nrow(.),
+                                replace = TRUE),
+                TTTYN = sample(x = c("Yes", "No"),
+                               size = nrow(.),
+                               replace = TRUE,
+                               prob = c(0.9, 0.1)))
+
+baseDates <- baseEI \%>\%
+  dplyr::select(idvar) \%>\%
+  dplyr::distinct() \%>\%
+  mutate(tttdebdate_var = as.Date(runif(n = nrow(.), -100, 0), origin = "2021-01-01"),
+         tttfindate_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"))
+
+PanelLasagnaAlluvialAE(baseEI = baseEI,
+                       baseTr = baseTr,
+                       baseDates = baseDates,
+                       idvar = "idvar",
+                       Termsvar = "Termsvar",
+                       EIdatestart_var = "EIdatestart_var",
+                       EIdateend_var = "EIdateend_var",
+                       gradevar = "gradevar",
+                       ARMvar = "ARMvar",
+                       tttdebdate_var = "tttdebdate_var",
+                       tttfindate_var = "tttfindate_var",
+                       choixEI = "2",
+                       unit = "year")
+
 }

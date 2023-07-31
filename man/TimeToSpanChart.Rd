@@ -79,3 +79,37 @@ A plot
 \description{
 Ce graphique permet d’observer et surtout de comparer la temporalité de plusieurs aspects d’un groupe d’EI (une vingtaine) par rapport à la durée du traitement dans chaque bras. On y observe le temps médian d’appartition du premier EI sa durée et le temps médian d’appartition d’un grade supérieur à 3 et d’un grade supérieur à 4.
 }
+\examples{
+library(dplyr)
+baseEI <- data.frame(idvar = paste0("Patients", round(runif(n = 100, min = 0, max = 100))),
+                     Termsvar = round(runif(n = 100, min = 0, max = 2))) \%>\%
+  dplyr::mutate(SOCvar = round(Termsvar/10)) \%>\%
+  dplyr::mutate(across(everything(), .fns = as.character)) \%>\%
+  mutate(EIdatestart_var = as.Date(runif(n = nrow(.), 1, 200), origin = "2021-01-01"),
+         EIdateend_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"),
+         gradevar = round(runif(n = nrow(.), 1, 5)))
+
+baseTr  <- baseEI \%>\%
+  dplyr::select(idvar) \%>\%
+  dplyr::distinct() \%>\%
+  dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
+                                size = nrow(.),
+                                replace = TRUE),
+                TTTYN = sample(x = c("Yes", "No"),
+                               size = nrow(.),
+                               replace = TRUE,
+                               prob = c(0.9, 0.1)))
+
+baseDates <- baseEI \%>\%
+  dplyr::select(idvar) \%>\%
+  dplyr::distinct() \%>\%
+  mutate(tttdebdate_var = as.Date(runif(n = nrow(.), -100, 0), origin = "2021-01-01"),
+         tttfindate_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"))
+
+TimeToSpanChart(baseEI = baseEI, baseTr = baseTr, baseDates = baseDates,
+                idvar = "idvar", Termsvar = "Termsvar",
+                EIdatestart_var = "EIdatestart_var", EIdateend_var = "EIdateend_var",
+                gradevar = "gradevar", ARMvar = "ARMvar",
+                tttdebdate_var = "tttdebdate_var", tttfindate_var = "tttfindate_var")
+
+}

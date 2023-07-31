@@ -32,6 +32,37 @@
 #' @return A plot
 #' @export
 #'
+#' @examples
+#' library(dplyr)
+#' baseEI <- data.frame(idvar = paste0("Patients", round(runif(n = 100, min = 0, max = 100))),
+#'                      Termsvar = round(runif(n = 100, min = 0, max = 2))) %>%
+#'   dplyr::mutate(SOCvar = round(Termsvar/10)) %>%
+#'   dplyr::mutate(across(everything(), .fns = as.character)) %>%
+#'   mutate(EIdatestart_var = as.Date(runif(n = nrow(.), 1, 200), origin = "2021-01-01"),
+#'          EIdateend_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"),
+#'          gradevar = round(runif(n = nrow(.), 1, 5)))
+#'
+#' baseTr  <- baseEI %>%
+#'   dplyr::select(idvar) %>%
+#'   dplyr::distinct() %>%
+#'   dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
+#'                                 size = nrow(.),
+#'                                 replace = TRUE),
+#'                 TTTYN = sample(x = c("Yes", "No"),
+#'                                size = nrow(.),
+#'                                replace = TRUE,
+#'                                prob = c(0.9, 0.1)))
+#'
+#' baseDates <- baseEI %>%
+#'   dplyr::select(idvar) %>%
+#'   dplyr::distinct() %>%
+#'   mutate(tttdebdate_var = as.Date(runif(n = nrow(.), -100, 0), origin = "2021-01-01"),
+#'          tttfindate_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"))
+#'
+#' TendrilAE(baseEI = baseEI, baseTr = baseTr, baseDates = baseDates,
+#'           idvar = "idvar", Termsvar = "Termsvar", EIdatestart_var = "EIdatestart_var",
+#'           ARMvar = "ARMvar", tttdebdate_var = "tttdebdate_var")
+#'
 TendrilAE <- function(baseEI, baseTr, baseDates,
                       idvar, Termsvar, EIdatestart_var, ARMvar, tttdebdate_var,
                       coltype = NULL, caption=TRUE){
@@ -78,18 +109,18 @@ TendrilAE <- function(baseEI, baseTr, baseDates,
   SubjList <- baseEI %>% arrange(id_pat,ARM)
   SubjList$ARM <- ifelse(SubjList$ARM=="arm1",as.character(list_ARM[1]),as.character(list_ARM[2]))
 
-  data.Tendril <- Tendril(mydata = baseEI2,
-                          rotations = 4, #set the degree to which each event pulls a tendril in a direction
-                          AEfreqThreshold = 5, #Change the number of occurrences required to be plotted
-                          Tag = "COD",
-                          Treatments = c(as.character(list_ARM[1]),as.character(list_ARM[2])),
-                          Unique.Subject.Identifier = "id_pat",
-                          Terms = "COD",
-                          Treat = "ARM",
-                          StartDay = "Days",
-                          SubjList = SubjList,
-                          SubjList.subject = "id_pat",
-                          SubjList.treatment = "ARM")
+  data.Tendril <- Tendril::Tendril(mydata = baseEI2,
+                                   rotations = 4, #set the degree to which each event pulls a tendril in a direction
+                                   AEfreqThreshold = 5, #Change the number of occurrences required to be plotted
+                                   Tag = "COD",
+                                   Treatments = c(as.character(list_ARM[1]),as.character(list_ARM[2])),
+                                   Unique.Subject.Identifier = "id_pat",
+                                   Terms = "COD",
+                                   Treat = "ARM",
+                                   StartDay = "Days",
+                                   SubjList = SubjList,
+                                   SubjList.subject = "id_pat",
+                                   SubjList.treatment = "ARM")
 
   # vecteur pour les annotations
   # dans data.Tendril$data on prend les coordonn\u00e9es x et y du dernier point de chaque Terms

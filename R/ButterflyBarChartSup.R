@@ -35,6 +35,30 @@
 #' @return A plot
 #' @export
 #'
+#' @examples
+#' library(dplyr)
+#' baseEI <- data.frame(idvar = paste0("Patients", round(runif(n = 100, min = 0, max = 100))),
+#'                      Termsvar = round(runif(n = 100, min = 0, max = 10))) %>%
+#'   dplyr::mutate(SOCvar = round(Termsvar/10)) %>%
+#'   dplyr::mutate(across(everything(), .fns = as.character)) %>%
+#'   mutate(EIdatestart_var = as.Date(runif(n = nrow(.), 1, 200), origin = "2021-01-01"),
+#'          EIdateend_var = as.Date(runif(n = nrow(.), 201, 600), origin = "2021-01-01"),
+#'          gradevar = round(runif(n = nrow(.), 1, 5)))
+#'
+#' baseTr  <- baseEI %>%
+#'   dplyr::select(idvar) %>%
+#'   dplyr::distinct() %>%
+#'   dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
+#'                                 size = nrow(.),
+#'                                 replace = TRUE),
+#'                 TTTYN = sample(x = c("Yes", "No"),
+#'                                size = nrow(.),
+#'                                replace = TRUE,
+#'                                prob = c(0.9, 0.1)))
+#'
+#' ButterflyBarChartSup(baseEI = baseEI, baseTr = baseTr,
+#'                      idvar = "idvar", SOCvar = "SOCvar", gradevar = "gradevar")
+#'
 ButterflyBarChartSup  <- function(baseEI, baseTr,
                                   idvar, SOCvar, gradevar, SAEvar=NULL, TTTYN=NULL, ARMvar,
                                   varsup=3, ARMe=NULL, tri="RDAll",trivar=NULL, listcol=c("red","deepskyblue2")){
@@ -245,7 +269,7 @@ ButterflyBarChartSup  <- function(baseEI, baseTr,
     geom_text(aes(x=reorder(SOC,rank), label=test,y=upper),
               col="red", size=6,  hjust=-1, vjust=0.7,
               position = position_dodge(width = valXdodge)) +
-    scale_color_manual(name="RD",values = c("gray60","black"), labels=c("All grade",labForest)) +
+    scale_color_manual(name="RD",values = c("gray60","#000000"), labels=c("All grade",labForest)) +
     scale_shape_manual(name="RD",values=c(19,17), labels=c("All grade",labForest))+
     scale_y_continuous(name = paste0("Risk Difference with 95% CI
                        \n",list_ARM[1],"              ",list_ARM[2])) +
@@ -257,8 +281,8 @@ ButterflyBarChartSup  <- function(baseEI, baseTr,
           panel.background = element_blank(),
           panel.grid.major.y = element_line(color="grey90", linetype=1),
           axis.ticks.y = element_blank(),
-          axis.ticks.x = element_line(linewidth = 1, colour = "black"),
-          axis.line.x = element_line(color = "black", linetype = 1),
+          # axis.ticks.x = element_line(linewidth = 1, colour = "#000000"),
+          # axis.line.x = element_line(color = "#000000", linetype = 1),
           axis.title.x =element_text(size=10),
           axis.text.x = element_text(size=11),
           legend.position="bottom",
@@ -299,16 +323,16 @@ ButterflyBarChartSup  <- function(baseEI, baseTr,
     guides(fill = guide_legend(nrow = 2, byrow = TRUE)) +
     theme(
       panel.background = element_blank(),
-      axis.line = element_line(color="black"),
+      # axis.line = element_line(color="#000000"),
       axis.ticks.y = element_blank(),
       panel.grid.major.x = element_line(color="grey80", linetype=2),
       panel.grid.major.y = element_line(color="grey90", linetype=1),
       legend.position = "bottom",
       axis.text = element_text(size=10),
       axis.title = element_text(size=10),
-      legend.title = element_text("black", size=10, hjust = 1),
+      # legend.title = element_text("#000000", size=10, hjust = 1),
       legend.text = element_text(size=10)
     )
 
-  plot_grid(p1,  p2, labels = NULL,nrow = 1, rel_widths = c(0.75, 0.25))
+  cowplot::plot_grid(p1,  p2, labels = NULL,nrow = 1, rel_widths = c(0.75, 0.25))
 }

@@ -53,3 +53,18 @@ A plot
 Ce graphique représente de façon classique les résultats de biologies d’un patient au cours du temps (plusieurs unités possibles), il se combine bien avec le Patient Span Chart qui représente les EIs au cours du temps pour mettre en regards les biologies relevées et les évènements indésirables.
 Pour ce type de graphique il peut y avoir n’importe quel nombre de bras de traitement car on ne représente qu’un patient à la fois pour lequel on indique le bras dans lequel il est.
 }
+\examples{
+library(dplyr)
+baseBio <- data.frame(idvar = paste0("Patients", 1)) \%>\%
+  dplyr::sample_frac(size = 100, replace = TRUE) \%>\%
+  mutate(biodate_var = as.Date(runif(n = nrow(.), 1, 200), origin = "2021-01-01"),
+         label = paste0("bio : ", round(runif(n = nrow(.), 0, 5))),
+         unit = "mg/L",
+         biores_var = rnorm(n = nrow(.)))
+
+PanelBioAE(baseBio = baseBio,
+           idvar = "idvar", biodate_var = "biodate_var", unitbio_var = "unit", biolib_var = "label",
+           biores_var = "biores_var",
+           USU = baseBio$idvar[1])
+
+}

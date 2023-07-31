@@ -4,11 +4,17 @@
 #'
 #' @param data dataframe
 #' @param N N
+#' @param choixEI choixEI
+#' @param vect_grade vect_grade
+#' @param listcol listcol
+#' @param unit unit
+#'
+#' @importFrom ggalluvial geom_flow geom_stratum
 #'
 #' @return A plot
 #' @export
 #'
-AlluvialAE <- function(data,N){
+AlluvialAE <- function(data,N,choixEI,vect_grade, listcol, unit){
   a = 0.25*N
   b = 0.5*N
   c = 0.75*N
@@ -19,8 +25,8 @@ AlluvialAE <- function(data,N){
 
   ggplot(data,
          aes(x=visnum, stratum = grade, alluvium = id_pat, fill = grade)) +
-    geom_flow() +
-    geom_stratum() +
+    ggalluvial::geom_flow() +
+    ggalluvial::geom_stratum() +
     scale_fill_manual(name=paste0("Grade max atteint \npour ",choixEI),
                       breaks = c("0",vect_grade,"NA"),
                       labels = c("Pas d'EI",vect_grade,"Non trait\u00e9s"),

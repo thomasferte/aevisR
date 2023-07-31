@@ -4,10 +4,20 @@
 \alias{LasagnaAE}
 \title{LasagnaAE}
 \usage{
-LasagnaAE(data)
+LasagnaAE(data, unit, choixEI, vect_grade, listcol, idpat)
 }
 \arguments{
 \item{data}{dataframe}
+
+\item{unit}{unit}
+
+\item{choixEI}{choixEI}
+
+\item{vect_grade}{vect_grade}
+
+\item{listcol}{listcol}
+
+\item{idpat}{idpat}
 }
 \value{
 A plot

@@ -25,6 +25,20 @@
 #' @return A plot
 #' @export
 #'
+#' @examples
+#' library(dplyr)
+#' baseBio <- data.frame(idvar = paste0("Patients", 1)) %>%
+#'   dplyr::sample_frac(size = 100, replace = TRUE) %>%
+#'   mutate(biodate_var = as.Date(runif(n = nrow(.), 1, 200), origin = "2021-01-01"),
+#'          label = paste0("bio : ", round(runif(n = nrow(.), 0, 5))),
+#'          unit = "mg/L",
+#'          biores_var = rnorm(n = nrow(.)))
+#'
+#' PanelBioAE(baseBio = baseBio,
+#'            idvar = "idvar", biodate_var = "biodate_var", unitbio_var = "unit", biolib_var = "label",
+#'            biores_var = "biores_var",
+#'            USU = baseBio$idvar[1])
+#'
 PanelBioAE <- function(baseBio, idvar, biodate_var, unitbio_var,  biolib_var,
                        labvisite_var = NULL, biores_var,
                        USU, list_Bio=NULL, suivi=TRUE){

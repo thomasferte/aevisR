@@ -5,11 +5,14 @@
 #' @param data A dataframe
 #' @param group A groupe
 #' @param Type A type
+#' @param choixEI choixEI
+#' @param vect_grade vect_grade
+#' @param listcol listcol
 #'
 #' @return A plot
 #' @export
 #'
-BarChart <- function(data, group, Type=BPType){
+BarChart <- function(data, group, Type, choixEI, vect_grade, listcol){
   df_bar <- data[data$grade!="NA",] %>% select(visnum, grade) %>%
     group_by(visnum, grade) %>% summarize(count=n()) %>%
     mutate(pct=round((count/sum(count))*100,0))

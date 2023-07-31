@@ -59,7 +59,6 @@
 #'
 #' @return A plot
 #' @export
-#'
 PatientSpanAE <- function(baseEI, baseTr, baseDates, baseBio,
                           idvar, Termsvar, SOCvar, EIdatestart_var, EIdateend_var, gradevar, ongovar, outvar, SAEvar, ttt1var, ttt2var,
                           ARMvar, tttlab_var, tttdate_var,visnum_var,
@@ -93,7 +92,7 @@ PatientSpanAE <- function(baseEI, baseTr, baseDates, baseBio,
                                 "labbio" = labbiovar,
                                 "resbio" = resbiovar,
                                 "unitbio" = unitbiovar
-                                )
+  )
 
   #liste des groupes de traitement de la table baseTr
   list_ARM <- unique(baseTr$ARM)
@@ -328,11 +327,11 @@ PatientSpanAE <- function(baseEI, baseTr, baseDates, baseBio,
 
     # rectangle blanc par dessus les lignes pour faire un fond aux r\u00e9sultats de bio (plus lisible)
     {if (bio==TRUE) geom_rect(xmin = "Bio / Hemo", xmax = "Bio / Hemo", ymin = -Inf,ymax = Inf,
-              colour="white",fill="white",linewidth=10,show.legend = F)} +
+                              colour="white",fill="white",linewidth=10,show.legend = F)} +
 
     #labels pour les r\u00e9sultats d'analyse
     {if (bio==TRUE) geom_text(aes(y=biodat, x=aeterm, label=biores),size=3, angle=45,fontface="bold",
-              colour=ifelse(df_plot$colbio==2,"red",ifelse(df_plot$colbio==1,'red3','black')))} +
+                              colour=ifelse(df_plot$colbio==2,"red",ifelse(df_plot$colbio==1,'red3','black')))} +
 
     #axes verticaux x2 : un pour les jours depuis la rando, un pour les dates brutes de ce patient
     scale_y_continuous(name="Days since rando",breaks = seqx,
