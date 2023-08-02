@@ -57,7 +57,6 @@ VolcanoAE <- function(baseEI, baseTr,
                       idvar, Termsvar, TTTYN=NULL, ARMvar,
                       caption=TRUE, listcol = c("red", "deepskyblue2")){
   #remplacement des noms de variables
-  # names(baseEI)[names(baseEI) == id_pat] <- "id_pat"
   baseEI <- baseEI %>% rename("id_pat" = idvar,
                               "COD" = Termsvar)
   baseTr <- baseTr %>% rename("id_pat" = idvar,
@@ -75,8 +74,8 @@ VolcanoAE <- function(baseEI, baseTr,
 
   vecARM <- levels(baseTr$ARM)
   ### merge databases
-  dfAllAE <- expand.grid(id_pat = baseTr$id_pat,
-                         COD = baseEI$COD) %>%
+  dfAllAE <- expand.grid(id_pat = unique(baseTr$id_pat),
+                         COD = unique(baseEI$COD)) %>%
     left_join(baseTr, by = "id_pat") %>%
     left_join(baseEI %>%
                 select(id_pat, COD) %>%

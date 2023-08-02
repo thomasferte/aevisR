@@ -14,10 +14,8 @@ ButterflyBarChartSup(
   TTTYN = NULL,
   ARMvar,
   varsup = 3,
-  ARMe = NULL,
-  tri = "RDAll",
-  trivar = NULL,
-  listcol = c("red", "deepskyblue2")
+  listcol = c("red", "deepskyblue2"),
+  dodge_width = 0.1
 )
 }
 \arguments{
@@ -51,13 +49,9 @@ ButterflyBarChartSup(
 
 \item{varsup}{: Nature du groupe d’EIs à superposer parmi 3,4 (pour les EIs de grade>= à 3 ou resp 4) ou “Serious” – Note : pas de guillemets pour les chiffres –> par défaut 3}
 
-\item{ARMe}{: indiquer le bras expérimental, il sera placé en premier cad à gauche dans le graphique pour comparer au bras contrôle à droite. Ecrire le label du bras expérimental comme il est dans la base de données (ex: ARMe=“armB”) –> par défaut si cette option n’est pas remplie (donc ARMe=NULL) alors les groupes seront placés dans l’ordre alphabétique des labels}
-
-\item{tri}{: tri selon “pctAll”,“pctVarsup”,“RDAll”,“RDVarsup” toujours en décroissant –> par défaut selon le RD du total “RDAll”}
-
-\item{trivar}{: ex:“armA” label du groupe de traitement selon lequel effectuer le tri –> par défaut NULL tri selon les deux bras}
-
 \item{listcol}{: liste de couleurs pour chacun des groupes de traitements dans un vecteur soit avec les noms implémentés dans R (comme “red”, “blue”…) soit avec des codes (commençant par # par exemple “#52717F”) –> par défaut c(“deepskyblue2”,“red”)}
+
+\item{dodge_width}{The dodge between risk difference (default = 0.1)}
 }
 \value{
 A plot
@@ -88,9 +82,10 @@ baseTr  <- baseEI \%>\%
                 TTTYN = sample(x = c("Yes", "No"),
                                size = nrow(.),
                                replace = TRUE,
-                               prob = c(0.9, 0.1)))
+                               prob = c(0.9, 0.1)),
+                ARMvar = factor(ARMvar, levels = c("Treatment", "Placebo")))
 
 ButterflyBarChartSup(baseEI = baseEI, baseTr = baseTr,
-                     idvar = "idvar", SOCvar = "SOCvar", gradevar = "gradevar")
+                     idvar = "idvar", SOCvar = "SOCvar", gradevar = "gradevar", TTTYN = "TTTYN")
 
 }

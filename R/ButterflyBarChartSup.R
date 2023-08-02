@@ -26,14 +26,14 @@
 #' @param SAEvar column name
 #' @param TTTYN column name
 #' @param ARMvar column name
-#' @param ARMe : indiquer le bras expérimental, il sera placé en premier cad à gauche dans le graphique pour comparer au bras contrôle à droite. Ecrire le label du bras expérimental comme il est dans la base de données (ex: ARMe=“armB”) –> par défaut si cette option n’est pas remplie (donc ARMe=NULL) alors les groupes seront placés dans l’ordre alphabétique des labels
-#' @param tri : tri selon “pctAll”,“pctVarsup”,“RDAll”,“RDVarsup” toujours en décroissant –> par défaut selon le RD du total “RDAll”
-#' @param trivar : ex:“armA” label du groupe de traitement selon lequel effectuer le tri –> par défaut NULL tri selon les deux bras
 #' @param listcol : liste de couleurs pour chacun des groupes de traitements dans un vecteur soit avec les noms implémentés dans R (comme “red”, “blue”…) soit avec des codes (commençant par # par exemple “#52717F”) –> par défaut c(“deepskyblue2”,“red”)
 #' @param varsup : Nature du groupe d’EIs à superposer parmi 3,4 (pour les EIs de grade>= à 3 ou resp 4) ou “Serious” – Note : pas de guillemets pour les chiffres –> par défaut 3
+#' @param dodge_width The dodge between risk difference (default = 0.1)
 #'
 #' @return A plot
 #' @export
+#'
+#' @importFrom cowplot plot_grid
 #'
 #' @examples
 #' library(dplyr)
@@ -54,235 +54,127 @@
 #'                 TTTYN = sample(x = c("Yes", "No"),
 #'                                size = nrow(.),
 #'                                replace = TRUE,
-#'                                prob = c(0.9, 0.1)))
+#'                                prob = c(0.9, 0.1)),
+#'                 ARMvar = factor(ARMvar, levels = c("Treatment", "Placebo")))
 #'
 #' ButterflyBarChartSup(baseEI = baseEI, baseTr = baseTr,
-#'                      idvar = "idvar", SOCvar = "SOCvar", gradevar = "gradevar")
+#'                      idvar = "idvar", SOCvar = "SOCvar", gradevar = "gradevar", TTTYN = "TTTYN")
 #'
 ButterflyBarChartSup  <- function(baseEI, baseTr,
                                   idvar, SOCvar, gradevar, SAEvar=NULL, TTTYN=NULL, ARMvar,
-                                  varsup=3, ARMe=NULL, tri="RDAll",trivar=NULL, listcol=c("red","deepskyblue2")){
+                                  varsup=3, listcol=c("red","deepskyblue2"),
+                                  dodge_width = 0.1){
   #remplacement des noms de variables
-  baseEI <- baseEI %>% rename("id_pat" = idvar,
-                              "SOC" = SOCvar,
-                              "Grade" = gradevar)
-  if (!is.null(SAEvar)) baseEI <- baseEI %>% rename("Serious" = SAEvar)
+  varsup_labels <- paste0(c("Grade >= ", "Grade < "), varsup)
+
+  baseEI <- baseEI %>%
+    rename("id_pat" = idvar,
+           "COD" = Termsvar,
+           "Grade" = gradevar) %>%
+    mutate(Grade = case_when(Grade >= varsup ~ varsup_labels[1],
+                             Grade < varsup ~ varsup_labels[2])) %>%
+    distinct()
   baseTr <- baseTr %>% rename("id_pat" = idvar,
                               "ARM" = ARMvar)
-  if (!is.null(TTTYN)) baseTr <- baseTr %>% rename("TTTYN" = TTTYN)
 
-  #### table EI
-  #liste des groupes de traitement de la table baseTr
-  list_ARM <- unique(baseTr$ARM)
-  if (is.null(ARMe)) {
-    #Liste des id patients dans le bras num\u00e9ro 1
-    list_pat1 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[1]])
-    #Liste des id patients dans le bras num\u00e9ro 2
-    list_pat2 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[2]])
-  } else if (!is.null(ARMe)){
-    l2 <- unique(baseTr$ARM)
-    if (!(ARMe %in% l2)) return("Nom de bras de traitement non correct ou non pr\u00e9sent dans la base.")
-    list_ARM[1] <- ARMe
-    list_ARM[2] <- l2[l2 != ARMe]
-
-    #Liste des id patients dans le bras num\u00e9ro 1
-    list_pat1 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[1]])
-    #Liste des id patients dans le bras num\u00e9ro 2
-    list_pat2 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[2]])
-  }
-  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont pr\u00e9sents
-  baseEI$ARM <- ifelse(baseEI$id_pat %in% list_pat1, "armG", "armD")
-  baseTr$ARM <- ifelse(baseTr$ARM==list_ARM[1], "armG","armD")
-
-  if (is.null(TTTYN)) {
-    df_Tr2 <- baseTr
-  } else {
-    df_Tr2  <- baseTr[baseTr$TTTYN =="Yes",]
-  }
-  USU_distinct  <- df_Tr2  %>% select(id_pat, ARM) %>% distinct(id_pat, ARM)
-  frq2 <- data.frame(xtabs(~ ARM, data=USU_distinct))
-
-  df <- baseEI %>% select(id_pat, ARM, SOC) %>% distinct(id_pat, ARM, SOC)
-  Events <- df %>% group_by(ARM, SOC) %>% summarise(Count=n())
-  Events$pctAll <- round(ifelse(Events$ARM=="armG",Events$Count/frq2$Freq[frq2$ARM=="armG"],
-                                Events$Count/frq2$Freq[frq2$ARM=="armD"])*100,1)
-
-  # r\u00e9cup\u00e9rer la sous base avec les EIs de grade >= 3
-  if (varsup!="Serious") {
-    df <- baseEI %>% select(id_pat, ARM, SOC, Grade)
-    df2 <- df %>% filter(Grade >= varsup)
-  } else if (varsup=="Serious") {
-    df <- baseEI %>% select(id_pat, ARM, SOC, Grade, Serious)
-    df2 <- df %>% filter(Serious=="Yes")
+  if (!is.null(TTTYN)){
+    baseTr <- baseTr %>%
+      rename("TTTYN" = TTTYN) %>%
+      filter(TTTYN == "Yes")
   }
 
-  #on garde une occurence unique pour chaque id_pat et SOC
-  df2 <- df2 %>% select(-Grade) %>% distinct(id_pat,ARM,SOC)
-
-  Events2 <- df2 %>% group_by(ARM, SOC) %>% summarise(CountS=n())
-  Events2$pctS <- round(ifelse(Events2$ARM=="armG",Events2$CountS/frq2$Freq[frq2$ARM=="armG"],
-                               Events2$CountS/frq2$Freq[frq2$ARM=="armD"])*100,1)
-
-  df_ALL <- left_join(Events, Events2, by= c("ARM", "SOC")) %>% arrange(desc(pctAll))
-
-  df_long <- df_ALL %>%
-    pivot_longer(c(pctAll, pctS),names_to = "grp", values_to = "pct")
-
-  ############ Calcul du RD (ALL)
-  df_RD <- df_ALL %>% select(-pctAll, -pctS,-CountS) %>% pivot_wider(names_from = c(ARM), values_from = Count)
-
-  df_RD$armD[is.na(df_RD$armD)]<-0
-  df_RD$armG[is.na(df_RD$armG)]<-0
-  df_RD <- df_RD %>% pivot_longer(c("armG","armD"), names_to = "ARM", values_to = "yes")
-
-  df_RD$no <- ifelse(df_RD$ARM=="armG",
-                     frq2$Freq[frq2$ARM=="armG"]- df_RD$yes,
-                     frq2$Freq[frq2$ARM=="armD"] - df_RD$yes)
-  #Calcul du Risk Difference et de son intervalle de confiance
-  dfx_all <- setNames(data.frame(matrix(ncol = 5, nrow = 0)), c("Freq_Total", "SOC","CI_1", "CI_2", "RD"))
-
-  for (s in unique(df_RD$SOC)){
-    #pour chaque PT tableau permettant de calculer la p-value ainsi que le ratio
-    df1 <- subset(df_RD, SOC == s, select = (c(-SOC)))
-
-    dfx <- data.frame(SOC = s,
-                      frqTot = df_RD$yes[df_RD$SOC == s][1] + df_RD$yes[df_RD$SOC == s][2],
-                      RD = RDfunct(df1$yes[df1$ARM=="armD"], df1$yes[df1$ARM=="armG"],
-                                   frq2$Freq[frq2$ARM=="armD"], frq2$Freq[frq2$ARM=="armG"], CRC=TRUE)$estimate,
-                      CI_1 = RDfunct(df1$yes[df1$ARM=="armD"], df1$yes[df1$ARM=="armG"],
-                                     frq2$Freq[frq2$ARM=="armD"], frq2$Freq[frq2$ARM=="armG"], CRC=TRUE)$conf.int[1],
-                      CI_2 = RDfunct(df1$yes[df1$ARM=="armD"], df1$yes[df1$ARM=="armG"],
-                                     frq2$Freq[frq2$ARM=="armD"], frq2$Freq[frq2$ARM=="armG"], CRC=TRUE)$conf.int[2],
-                      row.names = NULL)
-    # A chaque PT concatenation des tables
-    dfx_all <- rbind(dfx_all,dfx)
+  if(!is.factor(baseTr$ARM)){
+    message("baseTr$ARM is converted to factor. Please change factor levels before calling the plot function to change the arms order of plotting.")
+    baseTr$ARM <- as.factor(baseTr$ARM)
   }
 
-  df_plot_forest <- data.frame(SOC = dfx_all$SOC,
-                               estimate1 =  dfx_all$RD,
-                               lower1 = dfx_all$CI_1,
-                               upper1 = dfx_all$CI_2, row.names=NULL)
+  if (!is.null(SAEvar)) baseEI <- baseEI %>%
+    rename("Serious" = SAEvar)
 
-  ############ autre Calcul du RD (grade>=value)
-  df_RD2 <- df_ALL %>% select(-pctAll, -pctS, -Count) %>% pivot_wider(names_from = ARM, values_from = CountS)
+  ### merge bases
+  vecARM <- levels(baseTr$ARM)
+  ### merge databases
+  dfAllAE <- expand.grid(id_pat = unique(baseTr$id_pat),
+                         SOCvar = unique(baseEI$SOCvar),
+                         Grade = unique(baseEI$Grade)) %>%
+    left_join(baseTr, by = "id_pat") %>%
+    left_join(baseEI %>%
+                select(id_pat, SOCvar, Grade) %>%
+                mutate(AE = 1) %>%
+                distinct(),
+              by = c("id_pat", "SOCvar", "Grade")) %>%
+    mutate(AE = if_else(is.na(AE), 0, AE))
 
-  df_RD2$armG[is.na(df_RD2$armG)]<-0
-  df_RD2$armD[is.na(df_RD2$armD)]<-0
-  df_RD2 <- df_RD2 %>% pivot_longer(c("armG","armD"), names_to = "ARM", values_to = "yes")
+  # compute database for all grades and worse grades
+  dfAllAE_allGrade <- dfAllAE %>%
+    group_by(id_pat, SOCvar, ARM, TTTYN) %>%
+    summarise(AE = max(AE),
+              type = "All grade",
+              .groups = "drop")
 
-  # ajout colonne avec le nombre de patients ayant eu cette SOC
-  df_RD2 <- left_join(df_RD2, df_RD %>% select(SOC, yes, ARM), by= c("ARM", "SOC"))
-  df_RD2$no <- df_RD2$yes.y-df_RD2$yes.x
-  df_RD2 <- df_RD2 %>% select(-yes.y)
-  colnames(df_RD2)<-c("SOC","ARM","yes","no")
-  #Calcul du Risque Relatif et de sont intervalle de confiance
-  dfx_all <- setNames(data.frame(matrix(ncol = 5, nrow = 0)), c("Freq_Total", "SOC","CI_1", "CI_2", "RD"))
-  for (s in unique(df_RD2$SOC)){
-    #pour chaque PT tableau permettant de calculer la p-value ainsi que le ratio
-    df1 <- subset(df_RD2, SOC == s, select = (c(-SOC)))
+  dfAllAE_sup3Grade <- dfAllAE %>%
+    filter(Grade == varsup_labels[1]) %>%
+    group_by(id_pat, SOCvar, ARM, TTTYN) %>%
+    summarise(AE = max(AE),
+              type = varsup_labels[1],
+              .groups = "drop")
 
-    dfx <- data.frame(SOC = s,
-                      frqTot = df_RD2$yes[df_RD2$SOC == s][1] + df_RD2$yes[df_RD2$SOC == s][2],
-                      RD = RDfunct(df1$yes[df1$ARM=="armD"],
-                                   df1$yes[df1$ARM=="armG"],
-                                   df1$no[df1$ARM=="armD"]+df1$yes[df1$ARM=="armD"],
-                                   df1$no[df1$ARM=="armG"]+df1$yes[df1$ARM=="armG"], CRC=TRUE)$estimate,
-                      CI_1 = RDfunct(df1$yes[df1$ARM=="armD"],
-                                     df1$yes[df1$ARM=="armG"],
-                                     df1$no[df1$ARM=="armD"]+df1$yes[df1$ARM=="armD"],
-                                     df1$no[df1$ARM=="armG"]+df1$yes[df1$ARM=="armG"], CRC=TRUE)$conf.int[1],
-                      CI_2 = RDfunct(df1$yes[df1$ARM=="armD"],
-                                     df1$yes[df1$ARM=="armG"],
-                                     df1$no[df1$ARM=="armD"]+df1$yes[df1$ARM=="armD"],
-                                     df1$no[df1$ARM=="armG"]+df1$yes[df1$ARM=="armG"], CRC=TRUE)$conf.int[2],
-                      row.names = NULL)
-    # A chaque PT concatenation des tables
-    dfx_all <- rbind(dfx_all,dfx)
-  }
+  # compute ci and all
+  df_plot <- dfAllAE_allGrade %>%
+    bind_rows(dfAllAE_sup3Grade) %>%
+    group_by(SOCvar, ARM, type) %>%
+    summarise(nb_event = sum(AE),
+              nb_indiv = n(),
+              percent_of_patient = nb_event/nb_indiv,
+              .groups = "drop") %>%
+    group_by(SOCvar, type) %>%
+    group_split() %>%
+    lapply(FUN = function(df_i){
+      a = df_i %>% filter(ARM == vecARM[[1]]) %>% pull(nb_event)
+      N1 = df_i %>% filter(ARM == vecARM[[1]]) %>% pull(nb_indiv)
+      b = df_i %>% filter(ARM == vecARM[[2]]) %>% pull(nb_event)
+      N0 = df_i %>% filter(ARM == vecARM[[2]]) %>% pull(nb_indiv)
 
-  dfx_all$RD[dfx_all$frqTot==0]<-NA
-  dfx_all$CI_1[dfx_all$frqTot==0]<-NA
-  dfx_all$CI_2[dfx_all$frqTot==0]<-NA
+      res <- RDfunct(a = a, b = b, N1 = N1, N0 = N0)
 
-  df_plot_forest <- left_join(df_plot_forest, dfx_all %>% select(-frqTot),by="SOC")
-  colnames(df_plot_forest)<-c("SOC","estimate1","lower1","upper1","estimate2","lower2","upper2")
+      df_i %>%
+        mutate(p_value = res$p.value,
+               estimate = res$estimate,
+               ci_inf = res$conf.int[1],
+               ci_sup = res$conf.int[2]) %>%
+        return(.)
+    }) %>%
+    bind_rows() %>%
+    mutate(test = if_else(p_value < 0.05, "*", ""))
 
-  # mettre en \u00e9vidence par des labels (geom_text) les EIs COD significatifs
-  df_plot_forest$test1 <- ""
-  df_plot_forest$test1[df_plot_forest$lower1<0 & df_plot_forest$upper1<0]<-"*"
-  df_plot_forest$test1[df_plot_forest$lower1>0 & df_plot_forest$upper1>0]<-"*"
-
-  # mettre en \u00e9vidence par des labels (geom_text) les EIs COD significatifs
-  df_plot_forest$test2 <- ""
-  df_plot_forest$test2[df_plot_forest$lower2<0 & df_plot_forest$upper2<0]<-"*"
-  df_plot_forest$test2[df_plot_forest$lower2>0 & df_plot_forest$upper2>0]<-"*"
-
-
-  ######## ranking
-  if (is.null(trivar)){
-    df_long_rk <- df_long
-  } else if (trivar==list_ARM[1]){
-    df_long_rk <- df_long %>% filter(ARM=="armG")
-  } else if (trivar==list_ARM[2]){
-    df_long_rk <- df_long %>% filter(ARM=="armD")
-  } else return("Valeur non valide pour l'option trivar")
-
-  if(tri == "RDAll"){
-    tb_rk <- df_plot_forest %>% arrange(desc(estimate1))
-  } else if (tri == "RDVarsup"){
-    tb_rk <- df_plot_forest %>% arrange(desc(estimate2))
-  } else if (tri=="pctAll"){
-    tb_rk <- df_long_rk %>% filter(grp=="pctAll") %>% arrange(desc(pct))
-  } else if (tri=="pctVarsup"){
-    tb_rk <- df_long_rk %>% filter(grp=="pctS") %>% arrange(desc(pct))
-  }
-  tb_rk$rank <- 1:nrow(tb_rk)
-  tb_rk <- tb_rk %>% select(SOC,rank) %>% ungroup() %>% distinct(SOC,rank)
-
-
-  df_long$dir <- ifelse(df_long$ARM=="armD",1,-1)
-  df_long$alpha <- ifelse(df_long$grp=="pctS","pctS","pctAll")
-
-  # pour avoir une unique colonne estimate, lower et upper avec un colonne groupe
-  df1 <- df_plot_forest %>% select(-c(estimate2, upper2,lower2,test2))
-  df2 <- df_plot_forest %>% select(-c(estimate1, upper1,lower1,test1))
-  df1$grp <- "RDTot"
-  df2$grp <- "RDtox"
-  colnames(df1)<-c("SOC","estimate","lower","upper","test","grp")
-  colnames(df2)<-c("SOC","estimate","lower","upper","test","grp")
-  df_plot_forest <- rbind(df1,df2)
-
-  ## ajout d'un des ranking (selon choix) à la table pour le graph
-  df_plot_forest <- merge(df_plot_forest, tb_rk, by="SOC")
-  df_long <- merge(df_long, tb_rk, by="SOC")
-
-  ################## forest plot seul
-  valXdodge=-0.7
-  if (varsup!="Serious") {labForest <- paste0("Grade >=", varsup)
-  } else if (varsup=="Serious") {labForest <- "Serieux"}
-
-  p2 <- ggplot(data=df_plot_forest, aes(x=reorder(SOC,rank), y=estimate,group=grp,colour=grp)) +
-    geom_point(size=2, aes(shape=grp),position = position_dodge(width = valXdodge)) +
-    geom_errorbar(aes(ymin=lower, ymax=upper),
-                  width=0.5, linewidth=0.5, position = position_dodge(width = valXdodge)) +
-    geom_hline(yintercept=0, lty=2, colour = "red", linewidth = 0.5) +
-    geom_text(aes(x=reorder(SOC,rank), label=test,y=upper),
-              col="red", size=6,  hjust=-1, vjust=0.7,
-              position = position_dodge(width = valXdodge)) +
-    scale_color_manual(name="RD",values = c("gray60","#000000"), labels=c("All grade",labForest)) +
-    scale_shape_manual(name="RD",values=c(19,17), labels=c("All grade",labForest))+
-    scale_y_continuous(name = paste0("Risk Difference with 95% CI
-                       \n",list_ARM[1],"              ",list_ARM[2])) +
-    facet_grid(reorder(SOC,rank) ~ ., scales = "free", space = "free", switch = "y") +
-    scale_x_discrete(limits= rev(levels(df_plot_forest$SOC))) +
-    coord_flip() +
+  ### plot
+  p2 <- df_plot %>%
+    select(SOCvar, type, estimate, ci_inf, ci_sup, test) %>%
+    distinct() %>%
+    ggplot(mapping = aes(x = estimate,
+                         y = SOCvar,
+                         xmin = ci_inf,
+                         xmax = ci_sup,
+                         color = type,
+                         shape = type,
+                         label = test)) +
+    geom_point(position = position_dodge(width = dodge_width)) +
+    geom_errorbarh(height = 0, position = position_dodge(width = dodge_width)) +
+    geom_vline(xintercept=0, lty=2, colour = "red", linewidth = 0.5) +
+    geom_text(col="red", size=6,  hjust=-1, vjust=0.7,
+              position = position_dodge(width = dodge_width)) +
+    scale_color_manual(name="RD",values = c("gray60","#000000")) +
+    scale_shape_manual(name="RD",values=c(19,17))+
+    labs(y = "SOC",
+         x = paste0("Risk ", vecARM[1]," -  risk ",vecARM[2],  "\n with 95% CI")) +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
     theme(axis.text.y = element_blank(),
           axis.title.y = element_blank(),
           panel.background = element_blank(),
           panel.grid.major.y = element_line(color="grey90", linetype=1),
           axis.ticks.y = element_blank(),
-          # axis.ticks.x = element_line(linewidth = 1, colour = "#000000"),
-          # axis.line.x = element_line(color = "#000000", linetype = 1),
+          axis.ticks.x = element_line(linewidth = 1, colour = "#000000"),
+          axis.line.x = element_line(color = "#000000", linetype = 1),
           axis.title.x =element_text(size=10),
           axis.text.x = element_text(size=11),
           legend.position="bottom",
@@ -293,37 +185,38 @@ ButterflyBarChartSup  <- function(baseEI, baseTr,
           panel.spacing.y = unit(3,"pt"))
 
   ################### Butterfly barplot superpos\u00e9
+  df_plot1 <- df_plot %>%
+    select(SOCvar, ARM, type, percent_of_patient) %>%
+    mutate(percent_of_patient = case_when(ARM == vecARM[1] ~ percent_of_patient,
+                                          ARM == vecARM[2] ~ -percent_of_patient))
+
   p1 <- ggplot() +
     geom_bar(
-      data = filter(df_long, grp=="pctS"),
-      aes(x = reorder(SOC,desc(rank)), y = pct*dir, fill = interaction(as.factor(ARM),as.factor(grp)), group = grp),
+      data = df_plot1 %>% filter(type == "All grade"),
+      aes(x = percent_of_patient, y = SOCvar, fill = interaction(ARM, type)),
       stat = "identity",
       width = 0.6
     ) +
     geom_bar(
-      data = filter(df_long, grp=="pctAll"),
-      aes(x = reorder(SOC,desc(rank)), y = pct*dir, fill = interaction(as.factor(ARM),as.factor(grp)), group = grp),
+      data = df_plot1 %>% filter(type == "Grade >= 3"),
+      aes(x = percent_of_patient, y = SOCvar, fill = interaction(ARM, type)),
       stat = "identity",
-      width = 0.9
+      width = 0.3
     ) +
-    geom_hline(yintercept = 0) +
-    coord_flip() +
-    scale_y_continuous(labels = function(x){paste0(abs(x), "%")},
-                       breaks = seq(-100,100,25)) +
-    scale_fill_manual(name=paste0(list_ARM[2] ,"\n\n",list_ARM[1]),
-                      values = c( "armG.pctS" = alpha(listcol[1], 1),
-                                  "armG.pctAll" = alpha(listcol[1], 2/5),
-                                  "armD.pctS" = alpha(listcol[2], 1),
-                                  "armD.pctAll" = alpha(listcol[2], 2/5)),
-                      labels = c("armG.pctS" = labForest,
-                                 "armG.pctAll" = "All grades",
-                                 "armD.pctS" = labForest,
-                                 "armD.pctAll" = "All grade")) +
-    labs(x = "System Organ Class", y = "Percent of patient") +
+    geom_vline(xintercept = 0) +
+    scale_x_continuous(labels = function(x){paste0(abs(x)*100, "%")},
+                       breaks = seq(-1,1,0.25),
+                       limits = c(-1, 1)) +
+    scale_fill_manual(name=paste0(vecARM[1] ,"\n\n",vecARM[2]),
+                      values = c(alpha(listcol[1], 2/5),
+                                 alpha(listcol[1], 1),
+                                 alpha(listcol[2], 2/5),
+                                 alpha(listcol[2], 1)),
+                      labels = rep(c("All grade", "Grade >= 3"), 2)) +
     guides(fill = guide_legend(nrow = 2, byrow = TRUE)) +
     theme(
       panel.background = element_blank(),
-      # axis.line = element_line(color="#000000"),
+      axis.line = element_line(color="#000000"),
       axis.ticks.y = element_blank(),
       panel.grid.major.x = element_line(color="grey80", linetype=2),
       panel.grid.major.y = element_line(color="grey90", linetype=1),
@@ -332,7 +225,8 @@ ButterflyBarChartSup  <- function(baseEI, baseTr,
       axis.title = element_text(size=10),
       # legend.title = element_text("#000000", size=10, hjust = 1),
       legend.text = element_text(size=10)
-    )
+    ) +
+    labs(y = "System Organ Class", x = "Percent of patient\n")
 
   cowplot::plot_grid(p1,  p2, labels = NULL,nrow = 1, rel_widths = c(0.75, 0.25))
 }
