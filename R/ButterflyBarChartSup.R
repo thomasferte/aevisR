@@ -70,6 +70,7 @@ ButterflyBarChartSup  <- function(baseEI, baseTr,
   baseEI <- baseEI %>%
     rename("id_pat" = idvar,
            "COD" = Termsvar,
+           "SOC" = SOCvar,
            "Grade" = gradevar) %>%
     mutate(Grade = case_when(Grade >= varsup ~ varsup_labels[1],
                              Grade < varsup ~ varsup_labels[2])) %>%
@@ -95,26 +96,26 @@ ButterflyBarChartSup  <- function(baseEI, baseTr,
   vecARM <- levels(baseTr$ARM)
   ### merge databases
   dfAllAE <- expand.grid(id_pat = unique(baseTr$id_pat),
-                         SOCvar = unique(baseEI$SOCvar),
+                         SOC = unique(baseEI$SOC),
                          Grade = unique(baseEI$Grade)) %>%
     left_join(baseTr, by = "id_pat") %>%
     left_join(baseEI %>%
-                select(id_pat, SOCvar, Grade) %>%
+                select(id_pat, SOC, Grade) %>%
                 mutate(AE = 1) %>%
                 distinct(),
-              by = c("id_pat", "SOCvar", "Grade")) %>%
+              by = c("id_pat", "SOC", "Grade")) %>%
     mutate(AE = if_else(is.na(AE), 0, AE))
 
   # compute database for all grades and worse grades
   dfAllAE_allGrade <- dfAllAE %>%
-    group_by(id_pat, SOCvar, ARM, TTTYN) %>%
+    group_by(id_pat, SOC, ARM, TTTYN) %>%
     summarise(AE = max(AE),
               type = "All grade",
               .groups = "drop")
 
   dfAllAE_sup3Grade <- dfAllAE %>%
     filter(Grade == varsup_labels[1]) %>%
-    group_by(id_pat, SOCvar, ARM, TTTYN) %>%
+    group_by(id_pat, SOC, ARM, TTTYN) %>%
     summarise(AE = max(AE),
               type = varsup_labels[1],
               .groups = "drop")
@@ -122,12 +123,12 @@ ButterflyBarChartSup  <- function(baseEI, baseTr,
   # compute ci and all
   df_plot <- dfAllAE_allGrade %>%
     bind_rows(dfAllAE_sup3Grade) %>%
-    group_by(SOCvar, ARM, type) %>%
+    group_by(SOC, ARM, type) %>%
     summarise(nb_event = sum(AE),
               nb_indiv = n(),
               percent_of_patient = nb_event/nb_indiv,
               .groups = "drop") %>%
-    group_by(SOCvar, type) %>%
+    group_by(SOC, type) %>%
     group_split() %>%
     lapply(FUN = function(df_i){
       a = df_i %>% filter(ARM == vecARM[[1]]) %>% pull(nb_event)
@@ -149,10 +150,10 @@ ButterflyBarChartSup  <- function(baseEI, baseTr,
 
   ### plot
   p2 <- df_plot %>%
-    select(SOCvar, type, estimate, ci_inf, ci_sup, test) %>%
+    select(SOC, type, estimate, ci_inf, ci_sup, test) %>%
     distinct() %>%
     ggplot(mapping = aes(x = estimate,
-                         y = SOCvar,
+                         y = SOC,
                          xmin = ci_inf,
                          xmax = ci_sup,
                          color = type,
@@ -186,20 +187,20 @@ ButterflyBarChartSup  <- function(baseEI, baseTr,
 
   ################### Butterfly barplot superpos\u00e9
   df_plot1 <- df_plot %>%
-    select(SOCvar, ARM, type, percent_of_patient) %>%
+    select(SOC, ARM, type, percent_of_patient) %>%
     mutate(percent_of_patient = case_when(ARM == vecARM[1] ~ percent_of_patient,
                                           ARM == vecARM[2] ~ -percent_of_patient))
 
   p1 <- ggplot() +
     geom_bar(
       data = df_plot1 %>% filter(type == "All grade"),
-      aes(x = percent_of_patient, y = SOCvar, fill = interaction(ARM, type)),
+      aes(x = percent_of_patient, y = SOC, fill = interaction(ARM, type)),
       stat = "identity",
       width = 0.6
     ) +
     geom_bar(
       data = df_plot1 %>% filter(type == "Grade >= 3"),
-      aes(x = percent_of_patient, y = SOCvar, fill = interaction(ARM, type)),
+      aes(x = percent_of_patient, y = SOC, fill = interaction(ARM, type)),
       stat = "identity",
       width = 0.3
     ) +
