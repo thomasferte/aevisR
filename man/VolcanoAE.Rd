@@ -11,63 +11,44 @@ VolcanoAE(
   Termsvar,
   TTTYN = NULL,
   ARMvar,
-  seuillab = 0.01,
   caption = TRUE,
   listcol = c("red", "deepskyblue2")
 )
 }
 \arguments{
-\item{baseEI}{la base des EIs avec :
+\item{baseEI}{The base of AEs with:
 \itemize{
-   \item idvar : l’identifiant du patient : au format character obligatoire
-   et sans manquants
-   \item Termsvar : le label des PT ou LLT pour chaque EI : au format
-   character obligatoire et sans manquants
+   \item idvar: Patient identifier, in character format, mandatory and without missing values.
+   \item Termsvar: PT or LLT label for each AE, in character format, mandatory and without missing values.
 }}
 
-\item{baseTr}{la base des traitements avec
+\item{baseTr}{The base of treatments with:
 \itemize{
-   \item idvar : l’identifiant du patient : au format character obligatoire
-   et sans manquants
-   \item ARMvar : le bras de traitement pour chaque individu : au format
-   character obligatoire et sans manquants
-   \item TTTYN [optionnal] une variable pour indiquer si le traitement à été pris
-   (sert à détecter les patients “à risque”) on recherchera les
-   occurences en “Yes” donc doit être codée en “Yes”/“No” en character
+   \item idvar: Patient identifier, in character format, mandatory and without missing values.
+   \item ARMvar: Treatment arm for each individual, in character format, mandatory and without missing values.
+   \item TTTYN : A variable indicating if the treatment was taken (used to detect "at-risk" patients). Occurrences will be searched for "Yes", so it should be coded as "Yes"/"No" in character format.
 }}
 
-\item{idvar}{(character) column name of patient id column}
+\item{idvar}{(character) Column name of the patient identifier.}
 
-\item{Termsvar}{(character) column name of PT or LLT label for each AE}
+\item{Termsvar}{(character) Column name of the label for each AE.}
 
-\item{TTTYN}{(character, default = NULL) column name indicating if the
-treatemnt was taken}
+\item{TTTYN}{(character, default = NULL) Column name indicating if the treatment was taken.}
 
-\item{ARMvar}{(character) column name for treatment group}
+\item{ARMvar}{(character) Column name for the treatment group.}
 
-\item{seuillab}{(numeric, default = 0.5) seuil vertical d’affichage des
-label, permet de ne pas afficher tous les labels pour épurer le graphique
-(entrer une valeur de p-value elle sera convertie en -log(10))}
+\item{caption}{(boolean, default = TRUE) TRUE/FALSE to display a basic graphic note with additional information about the format and content of the graph.}
 
-\item{caption}{(boolean, default = TRUE) TRUE/FALSE afficher une note de base
-de graphique avec des informations supplémentaires sur le format et le
-continu du graphique}
-
-\item{listcol}{(vector of character, default = (“red”,“deepskyblue2”)) liste
-de couleurs pour chacun des groupes de traitements dans un vecteur soit avec
-les noms implémentés dans R (comme “red”, “blue”…) soit avec des codes
-(commençant par # par exemple “#52717F”)}
+\item{listcol}{(vector of character, default = (“red”,“deepskyblue2”)) A list of colors for each treatment group, provided as a vector with either R's implemented color names (e.g., “red”, “blue”...) or color codes (starting with #, e.g., “#52717F”).}
 }
 \value{
 A Volcano plot
 }
 \description{
-chaque bulle = un EI, occurrence de l’EI pour la taille des
-bulles (soit nombre d’EIs, soit nombre de patients ayant eu cet EI). Couleur
-des bulles en fonction du groupe de traitement. P-value de Fisher en
-ordonnées et pour la saturation des bulles. En abscisse une mesure de
-différence entre les deux groupes soit l’absolute risk difference, le risque
-ratio, odds ratio, ou incidence rate ratio…
+Each bubble represents an Adverse Event (AE), with the bubble's size representing the occurrence of the AE (either the number of AEs or the number of patients who experienced the AE). The color of the bubbles corresponds to the treatment group. Fisher's p-value is shown on the y-axis and determines the saturation of the bubbles. On the x-axis, a risk difference between the two groups is displayed.
+}
+\details{
+VolcanoAE
 }
 \examples{
 library(dplyr)
@@ -82,6 +63,7 @@ baseTr  <- baseEI \%>\%
   dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
                                 size = nrow(.),
                                 replace = TRUE),
+                ARMvar = factor(ARMvar, levels = c("Treatment", "Placebo")),
                 TTTYN = sample(x = c("Yes", "No"),
                                size = nrow(.),
                                replace = TRUE,
@@ -93,4 +75,5 @@ VolcanoAE(baseEI = baseEI,
           Termsvar = "Termsvar",
           TTTYN = "TTTYN",
           ARMvar = "ARMvar")
+
 }

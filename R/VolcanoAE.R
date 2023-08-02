@@ -1,48 +1,31 @@
 #' VolcanoAE
 #'
-#' @description chaque bulle = un EI, occurrence de l’EI pour la taille des
-#' bulles (soit nombre d’EIs, soit nombre de patients ayant eu cet EI). Couleur
-#' des bulles en fonction du groupe de traitement. P-value de Fisher en
-#' ordonnées et pour la saturation des bulles. En abscisse une mesure de
-#' différence entre les deux groupes soit l’absolute risk difference, le risque
-#' ratio, odds ratio, ou incidence rate ratio…
+#' VolcanoAE
 #'
-#' @param baseEI la base des EIs avec :
+#' @description Each bubble represents an Adverse Event (AE), with the bubble's size representing the occurrence of the AE (either the number of AEs or the number of patients who experienced the AE). The color of the bubbles corresponds to the treatment group. Fisher's p-value is shown on the y-axis and determines the saturation of the bubbles. On the x-axis, a risk difference between the two groups is displayed.
+#'
+#' @param baseEI The base of AEs with:
 #' \itemize{
-#'    \item idvar : l’identifiant du patient : au format character obligatoire
-#'    et sans manquants
-#'    \item Termsvar : le label des PT ou LLT pour chaque EI : au format
-#'    character obligatoire et sans manquants
+#'    \item idvar: Patient identifier, in character format, mandatory and without missing values.
+#'    \item Termsvar: PT or LLT label for each AE, in character format, mandatory and without missing values.
 #' }
-#' @param baseTr la base des traitements avec
+#' @param baseTr The base of treatments with:
 #' \itemize{
-#'    \item idvar : l’identifiant du patient : au format character obligatoire
-#'    et sans manquants
-#'    \item ARMvar : le bras de traitement pour chaque individu : au format
-#'    character obligatoire et sans manquants
-#'    \item TTTYN [optionnal] une variable pour indiquer si le traitement à été pris
-#'    (sert à détecter les patients “à risque”) on recherchera les
-#'    occurences en “Yes” donc doit être codée en “Yes”/“No” en character
+#'    \item idvar: Patient identifier, in character format, mandatory and without missing values.
+#'    \item ARMvar: Treatment arm for each individual, in character format, mandatory and without missing values.
+#'    \item TTTYN : A variable indicating if the treatment was taken (used to detect "at-risk" patients). Occurrences will be searched for "Yes", so it should be coded as "Yes"/"No" in character format.
 #' }
-#' @param idvar (character) column name of patient id column
-#' @param Termsvar (character) column name of PT or LLT label for each AE
-#' @param TTTYN (character, default = NULL) column name indicating if the
-#' treatemnt was taken
-#' @param ARMvar (character) column name for treatment group
-#' @param caption (boolean, default = TRUE) TRUE/FALSE afficher une note de base
-#' de graphique avec des informations supplémentaires sur le format et le
-#' continu du graphique
-#' @param listcol (vector of character, default = (“red”,“deepskyblue2”)) liste
-#' de couleurs pour chacun des groupes de traitements dans un vecteur soit avec
-#' les noms implémentés dans R (comme “red”, “blue”…) soit avec des codes
-#' (commençant par # par exemple “#52717F”)
-#' @param seuillab (numeric, default = 0.5) seuil vertical d’affichage des
-#' label, permet de ne pas afficher tous les labels pour épurer le graphique
-#' (entrer une valeur de p-value elle sera convertie en -log(10))
+#' @param idvar (character) Column name of the patient identifier.
+#' @param Termsvar (character) Column name of the label for each AE.
+#' @param TTTYN (character, default = NULL) Column name indicating if the treatment was taken.
+#' @param ARMvar (character) Column name for the treatment group.
+#' @param caption (boolean, default = TRUE) TRUE/FALSE to display a basic graphic note with additional information about the format and content of the graph.
+#' @param listcol (vector of character, default = (“red”,“deepskyblue2”)) A list of colors for each treatment group, provided as a vector with either R's implemented color names (e.g., “red”, “blue”...) or color codes (starting with #, e.g., “#52717F”).
 #'
 #' @return A Volcano plot
 #' @export
 #' @importFrom ggrepel geom_text_repel
+#' @import ggplot2
 #'
 #' @examples
 #' library(dplyr)
@@ -57,6 +40,7 @@
 #'   dplyr::mutate(ARMvar = sample(x = c("Placebo", "Treatment"),
 #'                                 size = nrow(.),
 #'                                 replace = TRUE),
+#'                 ARMvar = factor(ARMvar, levels = c("Treatment", "Placebo")),
 #'                 TTTYN = sample(x = c("Yes", "No"),
 #'                                size = nrow(.),
 #'                                replace = TRUE,
@@ -68,133 +52,98 @@
 #'           Termsvar = "Termsvar",
 #'           TTTYN = "TTTYN",
 #'           ARMvar = "ARMvar")
-
+#'
 VolcanoAE <- function(baseEI, baseTr,
                       idvar, Termsvar, TTTYN=NULL, ARMvar,
-                      seuillab = 0.01, caption=TRUE, listcol = c("red", "deepskyblue2")){
+                      caption=TRUE, listcol = c("red", "deepskyblue2")){
   #remplacement des noms de variables
   # names(baseEI)[names(baseEI) == id_pat] <- "id_pat"
   baseEI <- baseEI %>% rename("id_pat" = idvar,
                               "COD" = Termsvar)
   baseTr <- baseTr %>% rename("id_pat" = idvar,
                               "ARM" = ARMvar)
-  if (!is.null(TTTYN)) baseTr <- baseTr %>% rename("TTTYN" = TTTYN)
-
-  #liste des groupes de traitement de la table baseTr
-  list_ARM <- unique(baseTr$ARM)
-  #Liste des id patients dans le bras num\u00e9ro 1
-  list_pat1 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[1]])
-  #Liste des id patients dans le bras num\u00e9ro 2
-  list_pat2 <- unique(baseTr$id_pat[baseTr$ARM == list_ARM[2]])
-  #Ajouter une colonne ARM dans la table data en faisant correspondre les id_pat selon la liste où ils sont pr\u00e9sents
-  baseEI$ARM <- ifelse(baseEI$id_pat %in% list_pat1, "arm1", "arm2")
-  baseTr$ARM <- ifelse(baseTr$ARM==list_ARM[1], "arm1","arm2")
-
-  ############################################################################
-  ######################## Construction table volcano ########################
-  ###################
-  # Calcul des freq
-  ###################
-  data_distinct <- baseEI %>% select(id_pat,ARM,COD) %>% distinct(id_pat, ARM, COD)
-  frq1 <- data.frame(xtabs(~ COD + ARM, data = data_distinct))
-
-  ## Total subjects in each ARM
-  if (is.null(TTTYN)) {
-    df_Tr2 <- baseTr
-  } else {
-    df_Tr2  <- baseTr[baseTr$TTTYN=="Yes",]
-  }
-  USU_distinct  <- df_Tr2  %>% select(id_pat, ARM) %>% distinct(id_pat, ARM)
-  frq2 <- data.frame(xtabs(~ ARM, data=USU_distinct)) # compte le nombre de patient dans chacun des bras
-
-  #Merged
-  frq3 <- merge(frq1, frq2, by="ARM")
-  frq4 <- frq3 %>%
-    mutate(no = Freq.y - Freq.x, # total - # with event
-           yes = Freq.x) %>% # all with AE
-    arrange(COD, ARM) %>%
-    select(c(ARM, COD, yes, no))
-  # frq4 : pour chaque type d'EI et par bras, nombre de patients ayant eu cet EI et nombre de patients ne l'ayant pas eu
-
-  ########################################
-  # Calcul Risk difference et P value
-  ########################################
-  #Creation d'une table pour accueilir toutes les donn\u00e9es n\u00e9cessaires
-  dfx_all <- setNames(data.frame(matrix(ncol = 4, nrow = 0)), c("Freq_Total", "COD", "pval","RD"))
-
-  for (p in unique(frq4$COD)){
-    #pour chaque PT tableau permettant de calculer la p-value ainsi que le ratio
-    df1 <- subset(frq4, COD == p, select = (c(-COD, -ARM)))
-
-    #Test de fisher sur le tableau pr\u00e9c\u00e9dent
-    stat1 <- fisher.test(df1)
-
-    dfx <- data.frame(COD = p,
-                      pval = stat1[[1]],
-                      frqTot = frq4$yes[frq4$COD == p][1] + frq4$yes[frq4$COD == p][2],
-                      RD = RDfunct(df1[[1]][1], df1[[1]][2], frq2$Freq[frq2$ARM=="arm1"], frq2$Freq[frq2$ARM=="arm2"])$estimate,
-                      row.names = NULL)
-    # A chaque PT concat\u00e9nation des tables
-    dfx_all <- rbind(dfx_all,dfx)
+  if (!is.null(TTTYN)){
+    baseTr <- baseTr %>%
+      rename("TTTYN" = TTTYN) %>%
+      filter(TTTYN == "Yes")
   }
 
-  ########################################
-  vplot1 <- dfx_all %>%
-    mutate(logpval = -log10(pval)) %>%
-    dplyr::filter(is.finite(logpval))
-  vplot1$harmful <- ifelse(vplot1$RD	<	0, paste("Increased risk in ", list_ARM[2]), paste("Increased risk in ", list_ARM[1]))
+  if(!is.factor(baseTr$ARM)){
+    message("baseTr$ARM is converted to factor. Please change factor levels before calling VolcanoAE to change the arms order of plotting.")
+    baseTr$ARM <- as.factor(baseTr$ARM)
+  }
 
-
-  ## limites
-  lim1x <- floor(min(vplot1$RD)*10)/10
-  lim2x <- ceiling(max(vplot1$RD)*10)/10
-
-  limy <- ceiling(max(-log10(vplot1$pval)))
+  vecARM <- levels(baseTr$ARM)
+  ### merge databases
+  dfAllAE <- expand.grid(id_pat = baseTr$id_pat,
+                         COD = baseEI$COD) %>%
+    left_join(baseTr, by = "id_pat") %>%
+    left_join(baseEI %>%
+                select(id_pat, COD) %>%
+                mutate(AE = 1) %>%
+                distinct(),
+              by = c("id_pat", "COD")) %>%
+    mutate(AE = if_else(is.na(AE), 0, AE)) %>%
+    # compute summary statistics
+    group_by(COD) %>%
+    mutate(nb_event = sum(AE)) %>%
+    filter(nb_event != 0) %>%
+    mutate(p_val_fisher = fisher.test(AE, ARM)$p.value) %>%
+    group_by(COD, ARM, p_val_fisher, nb_event) %>%
+    summarise(risk = sum(AE)/n(),
+              .groups = "drop") %>%
+    tidyr::pivot_wider(names_from = ARM, values_from = risk) %>%
+    mutate(risk_difference = get(vecARM[1]) - get(vecARM[2]),
+           sign_difference = factor(sign(risk_difference),
+                                    levels = c(1, -1),
+                                    labels = paste0("Increased risk in ", vecARM)),
+           label = case_when(p_val_fisher < 0.05 ~ COD,
+                             TRUE ~ ""))
 
   ## text for caption
-  if (caption==TRUE){
+  if (caption){
     labcap <- "
-        Visual representation of AE data, Volcano plot for adverse events between two treatment arms.
-The x-axis represents the difference in proportions of participants experiencing each adverse event between the treatment arms.
-The y-axis represents the p value from Fisher's exact test on the -log10 scale.
-The centre of the bubble indicates the coordinates for each adverse event. The size of the bubble is proportional to the total number of events for both arms combined.
-Colour saturation help to see if multiple AE are in the same coordinate with red indicating greater risk in the testing arm and blue in the control arm.
-    Labels are added to events with value superior or equal to 0.5 on the y-axis."
+    Visual representation of AE data, Volcano plot for adverse events between two treatment arms.
+    The x-axis represents the difference in proportions of participants experiencing each adverse event between the treatment arms.
+    The y-axis represents the p value from Fisher's exact test.
+    The centre of the bubble indicates the coordinates for each adverse event. The size of the bubble is proportional to the total number of events for both arms combined.
+    Colour saturation help to see if multiple AE are in the same coordinate with red indicating greater risk in the testing arm and blue in the control arm.
+    Labels are added to events with value inferior to 0.05 on the y-axis."
   } else {labcap=""}
 
   #########################################
   # Volcano Plot
   #########################################
-  p <- ggplot(vplot1,
-              aes(x=RD, y=logpval, size=frqTot,
-                  label = ifelse(logpval > -log10(seuillab), COD, ""),
-                  color=harmful)) +
+  p <- ggplot(dfAllAE,
+              aes(x=risk_difference, y=p_val_fisher, size=nb_event,
+                  label = label,
+                  color= sign_difference)) +
     geom_point(alpha = 0.40) +
-    scale_size(range = c(1,22)) +
-    labs(title = "Volcano Plot") +
-    scale_color_manual(breaks = c(paste("Increased risk in ", list_ARM[2]),
-                                  paste("Increased risk in ", list_ARM[1])),
-                       values = listcol) +
-    scale_y_continuous(name="-log10(p-value)", limits = c(0,limy)) +
-    scale_x_continuous(name="Risk difference", breaks = seq(lim1x,lim2x,by=0.05),
-                       limits = c(lim1x,lim2x)) +
-    ggrepel::geom_text_repel(size = 4,color="black",min.segment.length = 0.1, force = 5,
-                             max.overlaps = 30,
-                             nudge_y = ifelse(vplot1$RD<0,0.02,-0.02),
-                             nudge_x = ifelse(vplot1$RD<0,0.02,-0.02),
+    scale_size(range = c(1,10)) +
+    scale_color_manual(values = listcol) +
+    scale_y_log10() +
+    annotation_logticks(sides = "l") +
+    ggrepel::geom_text_repel(size = 4,
+                             color="black",
+                             min.segment.length = 0.1,
                              direction="both") +
-    labs(shape="Treatment Group", caption=labcap) +
-    guides(size = "none") +
-    geom_hline(yintercept=-log10(0.05), col="red", linetype=2) +
-    geom_text(x=lim2x,y=-log10(0.05),label = "p-value = 0.05", col="red", size=4, vjust=-0.5, hjust=0.5) +
+    labs(shape="Treatment Group",
+         caption=labcap,
+         title = "Volcano Plot",
+         x = "Risk difference",
+         y = "P-value",
+         color = "",
+         size = "Nb of events") +
+    geom_hline(yintercept= 0.05, col="red", linetype=2) +
+    geom_text(x=min(dfAllAE$risk_difference),
+              y= log10(0.05),
+              label = "p-value = 0.05",
+              col="red",
+              size=4, vjust=-0.5, hjust="left") +
     geom_vline(xintercept = 0, col="grey") +
-    theme(panel.background = element_blank(),
-          legend.position = "bottom",
-          legend.title = element_blank(),
-          legend.text = element_text(size = 10),
-          axis.text = element_text(size=10),
-          axis.title = element_text(size=12),
-          axis.line= element_line(linewidth =0.5, colour = "black"))
+    theme_bw() +
+    theme(legend.position = "bottom",
+          plot.caption = element_text(hjust = 0))
 
   return(p)
 }
